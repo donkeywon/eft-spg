@@ -1,5 +1,11 @@
 package cmd
 
+import (
+	"eft-spg/service/database"
+	"github.com/donkeywon/gtil/httpd"
+)
+
 type Config struct {
-	AssetsPath string `json:"assets_path" yaml:"assets_path"`
+	Database database.Config `json:"database" yaml:"database"`
+	Httpd    *httpd.Config   `json:"httpd" yaml:"httpd"`
 }

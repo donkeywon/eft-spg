@@ -3,7 +3,25 @@ package controller
 import "net/http"
 
 func init() {
-
+	RegisterRouter("/raid/profile/list", GetProfile)
+	RegisterRouter("/client/match/available", ServerAvailable)
+	RegisterRouter("/client/match/updatePing", UpdatePing)
+	RegisterRouter("/client/match/join", JoinMatch)
+	RegisterRouter("/client/match/group/start_game", JoinMatch)
+	RegisterRouter("/client/match/exit", ExitMatch)
+	RegisterRouter("/client/match/group/create", CreateGroup)
+	RegisterRouter("/client/match/group/delete", DeleteGroup)
+	RegisterRouter("/client/match/group/status", GetGroupStatus)
+	RegisterRouter("/client/match/group/exit_from_menu", ExitToMenu)
+	RegisterRouter("/client/match/group/looking/start", StartGroupSearch)
+	RegisterRouter("/client/match/group/looking/stop", StopGroupSearch)
+	RegisterRouter("/client/match/group/invite/send", SendGroupInvite)
+	RegisterRouter("/client/match/group/invite/accept", AcceptGroupInvite)
+	RegisterRouter("/client/match/group/invite/cancel", CancelGroupInvite)
+	RegisterRouter("/client/match/offline/start", StartOfflineRaid)
+	RegisterRouter("/client/match/offline/end", EndOfflineRaid)
+	RegisterRouter("/client/putMetrics", PutMetrics)
+	RegisterRouter("/client/getMetricsConfig", GetMetrics)
 }
 
 func GetProfile(resp http.ResponseWriter, req *http.Request) {
