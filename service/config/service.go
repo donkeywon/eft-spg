@@ -1,29 +1,26 @@
-package httpd
+package config
 
 import (
-	"context"
-	"eft-spg/controller"
-	"github.com/donkeywon/gtil/httpd"
+	"eft-spg/util"
+	"github.com/bytedance/sonic/ast"
 	"github.com/donkeywon/gtil/service"
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
 )
 
 const (
-	Name = "httpd"
+	Name = "config"
 )
 
 type svc struct {
+	config *Config
 	logger *zap.Logger
-	httpd  *httpd.HttpD
+	c      *ast.Node
 }
 
-func New(config *httpd.Config) service.Service {
-	s := &svc{}
-	s.httpd = httpd.New(config, context.Background())
-	s.httpd.SetHandler(controller.GetRouter())
-
-	return s
+func New(config *Config) service.Service {
+	return &svc{
+		config: config,
+	}
 }
 
 func (s *svc) Name() string {
@@ -32,21 +29,28 @@ func (s *svc) Name() string {
 
 func (s *svc) Open() error {
 	s.logger.Info("Open")
-	return multierr.Combine(s.httpd.Open(), s.httpd.LastError())
+
+	c, err := util.ReadJsonDir(s.config.Path)
+	if err == nil {
+		return err
+	}
+	s.c = &c
+
+	return nil
 }
 
 func (s *svc) Close() error {
 	s.logger.Info("Close")
-	return s.httpd.Close()
+	return nil
 }
 
 func (s *svc) Shutdown() error {
 	s.logger.Info("Shutdown")
-	return s.httpd.Shutdown()
+	return nil
 }
 
 func (s *svc) WithLogger(logger *zap.Logger) {
-	s.logger = logger.Named(Name)
+	s.logger = logger.Named(s.Name())
 }
 
 func (s *svc) Statistics() map[string]float64 {

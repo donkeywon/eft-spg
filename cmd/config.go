@@ -6,6 +6,6 @@ import (
 )
 
 type Config struct {
-	Database database.Config `json:"database" yaml:"database"`
-	Httpd    *httpd.Config   `json:"httpd" yaml:"httpd"`
+	Database *database.Config `json:"database" yaml:"database"`
+	Httpd    *httpd.Config    `json:"httpd" yaml:"httpd"`
 }

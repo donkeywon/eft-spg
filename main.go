@@ -1,7 +1,15 @@
 package main
 
-import "github.com/donkeywon/gtil/logger"
+import (
+	"eft-spg/util"
+	"fmt"
+	"github.com/gobuffalo/packd"
+)
 
 func main() {
-	logger.Default()
+	util.ConfigFileBox.Walk(func(s string, file packd.File) error {
+		fmt.Println(s)
+		fmt.Println(file.Name())
+		return nil
+	})
 }
