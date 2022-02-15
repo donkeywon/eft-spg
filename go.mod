@@ -3,9 +3,9 @@ module github.com/donkeywon/eft-spg
 go 1.17
 
 require (
-	github.com/bytedance/sonic v1.0.0
+	github.com/buger/jsonparser v1.1.1
+	github.com/bytedance/sonic v1.0.2
 	github.com/donkeywon/gtil v0.1.0
-	github.com/gobuffalo/packd v1.0.1
 	github.com/gobuffalo/packr/v2 v2.8.3
 	github.com/gorilla/mux v1.8.0
 	github.com/stretchr/testify v1.7.0
@@ -13,6 +13,8 @@ require (
 	go.uber.org/zap v1.21.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
+
+require github.com/gobuffalo/packd v1.0.1 // indirect
 
 require (
 	github.com/chenzhuoyu/base64x v0.0.0-20211019084208-fb5309c8db06 // indirect
@@ -28,6 +30,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
+	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 )

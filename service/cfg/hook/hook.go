@@ -1,7 +1,6 @@
 package hook
 
 import (
-	"github.com/bytedance/sonic/ast"
 	"go.uber.org/multierr"
 )
 
@@ -11,13 +10,13 @@ func RegisterHook(hk HookFn) {
 	_hooks = append(_hooks, hk)
 }
 
-type HookFn func(node *ast.Node) error
+type HookFn func(node []byte) error
 
-func (hkf HookFn) DoHook(node *ast.Node) error {
+func (hkf HookFn) DoHook(node []byte) error {
 	return hkf(node)
 }
 
-func PostLoadHook(n *ast.Node) error {
+func PostLoadHook(n []byte) error {
 	var err error
 	for _, _hook := range _hooks {
 		err = multierr.Append(err, _hook.DoHook(n))

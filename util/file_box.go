@@ -1,8 +1,7 @@
 package util
 
 import (
-	"github.com/bytedance/sonic"
-	"github.com/bytedance/sonic/ast"
+	"github.com/buger/jsonparser"
 	"github.com/donkeywon/gtil/util"
 	"github.com/gobuffalo/packd"
 	"github.com/gobuffalo/packr/v2"
@@ -15,16 +14,15 @@ var (
 	ImageBox    = packr.New("Image", "../assets/images")
 	ConfigBox   = packr.New("Config", "../cfg")
 
-	PathSeparator = "/"
 	EmptyJsonNode = []byte("{}")
+	PathSeparator = "/"
 )
 
-func ReadJsonBox(box *packr.Box) (*ast.Node, error) {
+func ReadJsonBox(box *packr.Box) ([]byte, error) {
+	n := EmptyJsonNode
 	if box == nil {
-		return &ast.Node{}, nil
+		return n, nil
 	}
-
-	n, _ := sonic.Get(EmptyJsonNode)
 
 	err := box.Walk(func(filePath string, fileInfo packd.File) error {
 		filePathSplit := strings.Split(filePath, PathSeparator)
@@ -32,25 +30,13 @@ func ReadJsonBox(box *packr.Box) (*ast.Node, error) {
 		if fe != JsonFileExt {
 			return nil
 		}
-
-		n1 := &n
-		for i := 0; i < len(filePathSplit)-1; i++ {
-			if !n1.Get(filePathSplit[i]).Exists() {
-				newN, _ := sonic.Get(EmptyJsonNode)
-				_, err := n1.Set(filePathSplit[i], newN)
-				if err != nil {
-					return err
-				}
-			}
-
-			n1 = n1.Get(filePathSplit[i])
-		}
+		filePathSplit[len(filePathSplit)-1] = fn
 
 		n2, err := GetFileHandler(fe).Handle(util.String2Bytes(fileInfo.String()))
 		if err != nil {
 			return err
 		}
-		_, err = n1.SetAny(fn, n2.(ast.Node))
+		n, err = jsonparser.Set(n, n2, filePathSplit...)
 		if err != nil {
 			return err
 		}
@@ -58,13 +44,21 @@ func ReadJsonBox(box *packr.Box) (*ast.Node, error) {
 		return nil
 	})
 
-	return &n, err
+	return n, err
 }
 
-func ReadConfigBox() (*ast.Node, error) {
+func ReadConfigBox() ([]byte, error) {
 	return ReadJsonBox(ConfigBox)
 }
 
-func ReadDatabaseBox() (*ast.Node, error) {
+func ReadDatabaseBox() ([]byte, error) {
 	return ReadJsonBox(DatabaseBox)
+}
+
+func FileNameAndExt(fileName string) (string, string) {
+	splited := strings.Split(fileName, ".")
+	if len(splited) < 2 {
+		return fileName, ""
+	}
+	return strings.Join(splited[0:len(splited)-1], "."), splited[len(splited)-1]
 }

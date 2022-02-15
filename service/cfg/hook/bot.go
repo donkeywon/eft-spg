@@ -1,7 +1,6 @@
 package hook
 
 import (
-	"github.com/bytedance/sonic/ast"
 	"github.com/donkeywon/eft-spg/helper"
 )
 
@@ -39,7 +38,9 @@ var whiteList = []string{
 	helper.ItemBaseClass["Other"],
 }
 
-func BotHook(n *ast.Node) error {
-	_, err := n.GetByPath("bot", "pmc", "dynamicLoot").SetAny("whitelist", whiteList)
-	return err
+func BotHook(n []byte) error {
+	// TODO
+	return nil
+	//_, err := n.GetByPath("bot", "pmc", "dynamicLoot").SetAny("whitelist", whiteList)
+	//return err
 }

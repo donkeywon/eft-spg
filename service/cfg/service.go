@@ -1,7 +1,6 @@
 package cfg
 
 import (
-	"github.com/bytedance/sonic/ast"
 	"github.com/donkeywon/eft-spg/service/cfg/hook"
 	"github.com/donkeywon/eft-spg/util"
 	"github.com/donkeywon/gtil/service"
@@ -11,10 +10,13 @@ const (
 	Name = "cfg"
 )
 
+var (
+	Data = util.EmptyJsonNode
+)
+
 type svc struct {
 	*service.BaseService
 	config *Config
-	c      *ast.Node
 }
 
 func New(config *Config) service.Service {
@@ -38,7 +40,7 @@ func (s *svc) Open() error {
 		return err
 	}
 
-	s.c = c
+	Data = c
 
 	return nil
 }
@@ -49,12 +51,4 @@ func (s *svc) Close() error {
 
 func (s *svc) Shutdown() error {
 	return nil
-}
-
-func (s *svc) Get(key string) *ast.Node {
-	return s.c.Get(key)
-}
-
-func (s *svc) GetByPath(path ...interface{}) *ast.Node {
-	return s.c.GetByPath(path...)
 }
