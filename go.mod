@@ -1,4 +1,4 @@
-module eft-spg
+module github.com/donkeywon/eft-spg
 
 go 1.17
 
