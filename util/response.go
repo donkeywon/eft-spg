@@ -1,8 +1,11 @@
 package util
 
 import (
+	"bytes"
+	"compress/zlib"
 	"encoding/json"
 	"github.com/donkeywon/gtil/util"
+	"io"
 	"net/http"
 	"sync"
 )
@@ -14,9 +17,12 @@ const (
 	ResponseCodeNicknameTooShort    = 1
 	ResponseCodeNickNameTooShort256 = 256
 	ResponseCode404                 = 404
+
+	HeaderKeyContentType = "Content-type"
+	ContentTypeJson      = "application/json"
 )
 
-var _responseMsgMap = map[int]string{
+var _httpResponseMsgMap = map[int]string{
 	ResponseCodeOK:                  "",
 	ResponseCode420:                 "Please play as PMC and go through the offline settings screen before pressing ready.",
 	ResponseCodeNicknameExist:       "The nickname is already in use",
@@ -26,10 +32,10 @@ var _responseMsgMap = map[int]string{
 }
 
 func GetResponseMsg(code int) string {
-	return _responseMsgMap[code]
+	return _httpResponseMsgMap[code]
 }
 
-type response struct {
+type httpResponse struct {
 	ErrCode int         `json:"err"`
 	ErrMsg  string      `json:"errmsg"`
 	Data    interface{} `json:"data"`
@@ -39,8 +45,8 @@ var (
 	_pool = NewPool()
 )
 
-func GetResponseWrapper() *HttpResponse {
-	hr := _pool.Get().(*HttpResponse)
+func GetResponseWrapper() *httpResponseWrapper {
+	hr := _pool.Get().(*httpResponseWrapper)
 	hr.r.ErrCode = ResponseCodeOK
 	hr.r.ErrMsg = GetResponseMsg(hr.r.ErrCode)
 	hr.r.Data = nil
@@ -48,14 +54,14 @@ func GetResponseWrapper() *HttpResponse {
 	return hr
 }
 
-func GetResponseWrapperFromBytes(bs []byte) (*HttpResponse, error) {
-	var resp response
+func GetResponseWrapperFromBytes(bs []byte) (*httpResponseWrapper, error) {
+	var resp httpResponse
 	err := json.Unmarshal(bs, &resp)
 	if err != nil {
 		return nil, err
 	}
 
-	hr := _pool.Get().(*HttpResponse)
+	hr := _pool.Get().(*httpResponseWrapper)
 	hr.r.ErrCode = resp.ErrCode
 	hr.r.ErrMsg = resp.ErrMsg
 	hr.r.Data = resp.Data
@@ -63,76 +69,100 @@ func GetResponseWrapperFromBytes(bs []byte) (*HttpResponse, error) {
 	return hr, nil
 }
 
-func GetResponseWrapperFromString(s string) (*HttpResponse, error) {
+func GetResponseWrapperFromString(s string) (*httpResponseWrapper, error) {
 	return GetResponseWrapperFromBytes(util.String2Bytes(s))
 }
 
-type HttpResponse struct {
-	r *response
+type httpResponseWrapper struct {
+	r *httpResponse
 	p *sync.Pool
 }
 
-func (hr *HttpResponse) Free() {
+func (hr *httpResponseWrapper) Free() {
 	hr.p.Put(hr)
 }
 
-func (hr *HttpResponse) SetErrCode(code int) {
+func (hr *httpResponseWrapper) SetErrCode(code int) {
 	hr.r.ErrCode = code
 }
 
-func (hr *HttpResponse) GetErrCode() int {
+func (hr *httpResponseWrapper) GetErrCode() int {
 	return hr.r.ErrCode
 }
 
-func (hr *HttpResponse) SetErrMsg(m string) {
+func (hr *httpResponseWrapper) SetErrMsg(m string) {
 	hr.r.ErrMsg = m
 }
 
-func (hr *HttpResponse) GetErrMsg() string {
+func (hr *httpResponseWrapper) GetErrMsg() string {
 	return hr.r.ErrMsg
 }
 
-func (hr *HttpResponse) SetData(d interface{}) {
+func (hr *httpResponseWrapper) SetData(d interface{}) {
 	hr.r.Data = d
 }
 
-func (hr *HttpResponse) GetData() interface{} {
+func (hr *httpResponseWrapper) GetData() interface{} {
 	return hr.r.Data
 }
 
-func (hr *HttpResponse) GetResponse() *response {
+func (hr *httpResponseWrapper) GetResponse() *httpResponse {
 	return hr.r
 }
 
 func NewPool() *sync.Pool {
 	return &sync.Pool{
 		New: func() interface{} {
-			return &HttpResponse{
-				r: &response{},
+			return &httpResponseWrapper{
+				r: &httpResponse{},
 			}
 		},
 	}
 }
 
-func HTTPResponse(errCode int, errMsg string, data interface{}, httpCode int, w http.ResponseWriter) error {
+func DoResponse(errCode int, errMsg string, data interface{}, w http.ResponseWriter) error {
 	r := GetResponseWrapper()
 	r.SetErrCode(errCode)
 	r.SetErrMsg(errMsg)
 	r.SetData(data)
 	defer r.Free()
 
-	w.Header().Set("Content-type", "application/json")
+	return DoResponseJson(r.GetResponse(), w)
+}
+
+func DoResponseJson(data interface{}, w http.ResponseWriter) error {
+	w.Header().Set(HeaderKeyContentType, ContentTypeJson)
+	enc, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	return DoResponseDirect(enc, http.StatusOK, w)
+}
+
+func DoResponseZlibJson(data interface{}, w http.ResponseWriter) error {
+	w.Header().Set(HeaderKeyContentType, ContentTypeJson)
+	j, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	zr, err := zlib.NewReader(bytes.NewReader(j))
+	if err != nil {
+		return err
+	}
+
+	var out bytes.Buffer
+	_, err = io.Copy(&out, zr)
+	if err != nil {
+		return err
+	}
+
+	return DoResponseDirect(out.Bytes(), http.StatusOK, w)
+}
+
+func DoResponseDirect(data []byte, httpCode int, w http.ResponseWriter) error {
 	w.WriteHeader(httpCode)
-
-	ret, err := json.Marshal(r.GetResponse())
-	if err != nil {
-		return err
-	}
-
-	_, err = w.Write(ret)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, err := w.Write(data)
+	return err
 }

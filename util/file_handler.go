@@ -13,6 +13,11 @@ const (
 	JsonFileExt = "json"
 )
 
+var (
+	JsonCommentReg, _  = regexp.Compile("//.*")
+	JsonCommentReplace = []byte("")
+)
+
 var _fileHandler = make(map[string]FileHandlerFn)
 
 func RegisterFileHandler(fileExt string, fn FileHandlerFn) {
@@ -20,6 +25,9 @@ func RegisterFileHandler(fileExt string, fn FileHandlerFn) {
 }
 
 func GetFileHandler(fileExt string) FileHandlerFn {
+	if _, exist := _fileHandler[fileExt]; !exist {
+		return UnknownFileHandler
+	}
 	return _fileHandler[fileExt]
 }
 
@@ -30,7 +38,10 @@ func (fn FileHandlerFn) Handle(bs []byte) (interface{}, error) {
 }
 
 func JsonFileHandler(bs []byte) (interface{}, error) {
-	re, _ := regexp.Compile("//.*")
-	rep := re.ReplaceAll(bs, []byte{})
+	rep := JsonCommentReg.ReplaceAll(bs, JsonCommentReplace)
 	return sonic.Get(rep)
+}
+
+func UnknownFileHandler(bs []byte) (interface{}, error) {
+	return nil, nil
 }

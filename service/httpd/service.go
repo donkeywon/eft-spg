@@ -16,10 +16,13 @@ const (
 type svc struct {
 	logger *zap.Logger
 	httpd  *httpd.HttpD
+	ctx    context.Context
 }
 
-func New(config *httpd.Config) service.Service {
-	s := &svc{}
+func New(config *httpd.Config, ctx context.Context) service.Service {
+	s := &svc{
+		ctx: ctx,
+	}
 	s.httpd = httpd.New(config, context.Background())
 	s.httpd.SetHandler(controller.GetRouter())
 

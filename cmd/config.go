@@ -6,6 +6,7 @@ import (
 )
 
 type Config struct {
+	Cfg      *config.Config   `json:"cfg" yaml:"cfg"`
 	Database *database.Config `json:"database" yaml:"database"`
 	Httpd    *httpd.Config    `json:"httpd" yaml:"httpd"`
 }

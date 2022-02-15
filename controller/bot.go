@@ -1,6 +1,8 @@
 package controller
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func init() {
 	RegisterRouter("/singleplayer/settings/bot/limit/{type}", GetBotLimit)

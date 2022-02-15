@@ -10,12 +10,13 @@ import (
 )
 
 var (
-	AssetsFileBox   = packr.New("Assets", "../assets")
-	DatabaseFileBox = packr.New("Database", "../assets/database")
-	ImageFileBox    = packr.New("Image", "../assets/images")
-	ConfigFileBox   = packr.New("Config", "../config")
+	AssetsBox   = packr.New("Assets", "../assets")
+	DatabaseBox = packr.New("Database", "../assets/database")
+	ImageBox    = packr.New("Image", "../assets/images")
+	ConfigBox   = packr.New("Config", "../cfg")
 
 	PathSeparator = "/"
+	EmptyJsonNode = []byte("{}")
 )
 
 func ReadJsonBox(box *packr.Box) (*ast.Node, error) {
@@ -23,31 +24,33 @@ func ReadJsonBox(box *packr.Box) (*ast.Node, error) {
 		return &ast.Node{}, nil
 	}
 
-	n, err := sonic.Get([]byte("{}"))
-	if err != nil {
-		return nil, err
-	}
+	n, _ := sonic.Get(EmptyJsonNode)
 
-	box.Walk(func(filePath string, fileInfo packd.File) error {
+	err := box.Walk(func(filePath string, fileInfo packd.File) error {
 		filePathSplit := strings.Split(filePath, PathSeparator)
+		fn, fe := FileNameAndExt(filePathSplit[len(filePathSplit)-1])
+		if fe != JsonFileExt {
+			return nil
+		}
+
 		n1 := &n
 		for i := 0; i < len(filePathSplit)-1; i++ {
 			if !n1.Get(filePathSplit[i]).Exists() {
-				_, err := n1.Set(filePathSplit[i], ast.NewNull())
+				newN, _ := sonic.Get(EmptyJsonNode)
+				_, err := n1.Set(filePathSplit[i], newN)
 				if err != nil {
 					return err
 				}
-
-				n1 = n1.Get(filePathSplit[i])
 			}
+
+			n1 = n1.Get(filePathSplit[i])
 		}
 
-		fn, fe := FileNameAndExt(filePathSplit[len(filePathSplit)-1])
-		_, err := GetFileHandler(fe).Handle(util.String2Bytes(fileInfo.String()))
+		n2, err := GetFileHandler(fe).Handle(util.String2Bytes(fileInfo.String()))
 		if err != nil {
 			return err
 		}
-		_, err = n1.Set(fn, ast.NewNull())
+		_, err = n1.SetAny(fn, n2.(ast.Node))
 		if err != nil {
 			return err
 		}
@@ -55,5 +58,13 @@ func ReadJsonBox(box *packr.Box) (*ast.Node, error) {
 		return nil
 	})
 
-	return &n, nil
+	return &n, err
+}
+
+func ReadConfigBox() (*ast.Node, error) {
+	return ReadJsonBox(ConfigBox)
+}
+
+func ReadDatabaseBox() (*ast.Node, error) {
+	return ReadJsonBox(DatabaseBox)
 }

@@ -2,13 +2,20 @@ package controller
 
 import (
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 	"net/http"
+)
+
+const (
+	Name = "controller"
 )
 
 var (
 	routers = make(map[string]func(http.ResponseWriter, *http.Request))
 
 	methods = []string{"GET", "POST", "PUT"}
+
+	logger *zap.Logger
 )
 
 func RegisterRouter(path string, f func(http.ResponseWriter, *http.Request)) {
@@ -23,4 +30,8 @@ func GetRouter() *mux.Router {
 	}
 
 	return router
+}
+
+func WithLogger(l *zap.Logger) {
+	logger = l.Named(Name)
 }

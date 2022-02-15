@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"eft-spg/util"
 	"github.com/bytedance/sonic/ast"
 	"github.com/donkeywon/gtil/service"
@@ -15,11 +16,13 @@ type svc struct {
 	config *Config
 	d      *ast.Node
 	logger *zap.Logger
+	ctx    context.Context
 }
 
-func New(config *Config) service.Service {
+func New(config *Config, ctx context.Context) service.Service {
 	return &svc{
 		config: config,
+		ctx:    ctx,
 	}
 }
 
@@ -30,11 +33,11 @@ func (s *svc) Name() string {
 func (s *svc) Open() error {
 	s.logger.Info("Open")
 
-	d, err := util.ReadJsonDir(s.config.Path)
+	d, err := util.ReadDatabaseBox()
 	if err != nil {
 		return err
 	}
-	s.d = &d
+	s.d = d
 
 	return err
 }
