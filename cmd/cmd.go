@@ -1,13 +1,10 @@
 package cmd
 
 import (
-	"context"
 	"eft-spg/service/cfg"
 	"eft-spg/service/database"
 	"eft-spg/service/httpd"
 	"github.com/donkeywon/gtil/service"
-	"go.uber.org/multierr"
-	"go.uber.org/zap"
 )
 
 const (
@@ -15,9 +12,7 @@ const (
 )
 
 type Command struct {
-	logger *zap.Logger
-	ctx    context.Context
-	cancel context.CancelFunc
+	*service.BaseService
 	config *Config
 
 	httpd    service.Service
@@ -25,16 +20,17 @@ type Command struct {
 	cfg      service.Service
 }
 
-func New(config *Config, ctx context.Context) *Command {
-	ctx1, cancel := context.WithCancel(ctx)
-	return &Command{
-		config:   config,
-		ctx:      ctx1,
-		cancel:   cancel,
-		httpd:    httpd.New(config.Httpd, ctx1),
-		database: database.New(config.Database, ctx1),
-		cfg:      cfg.New(config.Cfg, ctx1),
+func New(config *Config) *Command {
+	c := &Command{
+		BaseService: service.NewBase(),
+		config:      config,
 	}
+
+	c.AppendService(httpd.Name, httpd.New(config.Httpd))
+	c.AppendService(database.Name, database.New(config.Database))
+	c.AppendService(cfg.Name, cfg.New(config.Cfg))
+
+	return c
 }
 
 func (c *Command) Name() string {
@@ -42,25 +38,13 @@ func (c *Command) Name() string {
 }
 
 func (c *Command) Open() error {
-	c.logger.Info("Open")
-	return multierr.Combine(c.database.Open(), c.cfg.Open(), c.httpd.Open())
+	return nil
 }
 
 func (c *Command) Close() error {
-	c.logger.Info("Close")
-	c.cancel()
+	return nil
 }
 
 func (c *Command) Shutdown() error {
-	c.logger.Info("Shutdown")
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *Command) WithLogger(logger *zap.Logger) {
-	c.logger = logger.Named(Name)
-}
-
-func (c *Command) Statistics() map[string]float64 {
 	return nil
 }

@@ -1,11 +1,9 @@
 package database
 
 import (
-	"context"
 	"eft-spg/util"
 	"github.com/bytedance/sonic/ast"
 	"github.com/donkeywon/gtil/service"
-	"go.uber.org/zap"
 )
 
 const (
@@ -13,16 +11,15 @@ const (
 )
 
 type svc struct {
+	*service.BaseService
 	config *Config
 	d      *ast.Node
-	logger *zap.Logger
-	ctx    context.Context
 }
 
-func New(config *Config, ctx context.Context) service.Service {
+func New(config *Config) service.Service {
 	return &svc{
-		config: config,
-		ctx:    ctx,
+		BaseService: service.NewBase(),
+		config:      config,
 	}
 }
 
@@ -31,8 +28,6 @@ func (s *svc) Name() string {
 }
 
 func (s *svc) Open() error {
-	s.logger.Info("Open")
-
 	d, err := util.ReadDatabaseBox()
 	if err != nil {
 		return err
@@ -43,23 +38,9 @@ func (s *svc) Open() error {
 }
 
 func (s *svc) Close() error {
-	s.logger.Info("Close")
 	return nil
 }
 
 func (s *svc) Shutdown() error {
-	s.logger.Info("Shutdown")
-	return nil
-}
-
-func (s *svc) WithLogger(logger *zap.Logger) {
-	s.logger = logger.Named(s.Name())
-}
-
-func (s *svc) Statistics() map[string]float64 {
-	return nil
-}
-
-func (s *svc) LastError() error {
 	return nil
 }

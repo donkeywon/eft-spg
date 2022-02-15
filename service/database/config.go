@@ -1,5 +1,8 @@
 package database
 
 type Config struct {
-	Path string `json:"path" yaml:"path"`
+}
+
+func NewConfig() *Config {
+	return &Config{}
 }
