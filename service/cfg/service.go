@@ -1,9 +1,9 @@
 package cfg
 
 import (
-	"eft-spg/service/cfg/hook"
-	"eft-spg/util"
 	"github.com/bytedance/sonic/ast"
+	"github.com/donkeywon/eft-spg/service/cfg/hook"
+	"github.com/donkeywon/eft-spg/util"
 	"github.com/donkeywon/gtil/service"
 )
 

@@ -1,7 +1,7 @@
 package httpd
 
 import (
-	"eft-spg/controller"
+	"github.com/donkeywon/eft-spg/controller"
 	"github.com/donkeywon/gtil/httpd"
 	"github.com/donkeywon/gtil/service"
 	"go.uber.org/multierr"

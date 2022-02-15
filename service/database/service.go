@@ -1,8 +1,8 @@
 package database
 
 import (
-	"eft-spg/util"
 	"github.com/bytedance/sonic/ast"
+	"github.com/donkeywon/eft-spg/util"
 	"github.com/donkeywon/gtil/service"
 )
 

@@ -1,8 +1,8 @@
 package hook
 
 import (
-	"eft-spg/helper"
 	"github.com/bytedance/sonic/ast"
+	"github.com/donkeywon/eft-spg/helper"
 )
 
 func init() {

@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"eft-spg/service/cfg"
-	"eft-spg/service/database"
+	"github.com/donkeywon/eft-spg/service/cfg"
+	"github.com/donkeywon/eft-spg/service/database"
 	"github.com/donkeywon/gtil/httpd"
 )
 
