@@ -1,6 +1,7 @@
 package database
 
 import (
+	jsonvalue "github.com/Andrew-M-C/go.jsonvalue"
 	"github.com/donkeywon/eft-spg/util"
 	"github.com/donkeywon/gtil/service"
 )
@@ -12,7 +13,7 @@ const (
 type svc struct {
 	*service.BaseService
 	config *Config
-	d      []byte
+	d      *jsonvalue.V
 }
 
 func New(config *Config) service.Service {

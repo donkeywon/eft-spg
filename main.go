@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/donkeywon/eft-spg/cmd"
 	"github.com/donkeywon/eft-spg/controller"
 	"github.com/donkeywon/gtil/logger"
 	"github.com/donkeywon/gtil/service"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
@@ -15,33 +17,32 @@ import (
 	"time"
 )
 
-type Greeter interface {
-	Greet()
-}
-
 func main() {
-	config := cmd.NewConfig()
-
-	f, err := ioutil.ReadFile("./config.yaml")
-	if err != nil {
-		panic(err)
-	}
-
-	err = yaml.Unmarshal(f, config)
-	if err != nil {
-		panic(err)
-	}
-
 	lc := logger.DefaultConsoleConfig()
 	lc.Development = false
 	lc.Level = zap.NewAtomicLevelAt(zap.InfoLevel)
 	l, _ := logger.FromConfig(lc)
 	controller.WithLogger(l)
 
+	config := cmd.NewConfig()
+	f, err := ioutil.ReadFile("./config.yaml")
+	if err != nil {
+		l.Error("Start fail", zap.Error(err))
+		return
+	}
+
+	err = yaml.Unmarshal(f, config)
+	if err != nil {
+		l.Error("Start fail", zap.Error(err))
+		return
+	}
+
 	c := cmd.New(config)
 	err = service.DoOpen(c, context.Background(), l)
 	if err != nil {
-		panic(err)
+		l.Error("Start fail", zap.String("err", fmt.Sprintf("%+v", errors.Cause(err))))
+		fmt.Printf("%+v", err)
+		return
 	}
 
 	signalCh := make(chan os.Signal)

@@ -1,6 +1,7 @@
 package hook
 
 import (
+	jsonvalue "github.com/Andrew-M-C/go.jsonvalue"
 	"github.com/donkeywon/eft-spg/helper"
 )
 
@@ -38,9 +39,9 @@ var whiteList = []string{
 	helper.ItemBaseClass["Other"],
 }
 
-func BotHook(n []byte) error {
-	// TODO
+func BotHook(n *jsonvalue.V) error {
+	for i, str := range whiteList {
+		n.SetString(str).At("bot", "pmc", "dynamicLoot", "whitelist", i)
+	}
 	return nil
-	//_, err := n.GetByPath("bot", "pmc", "dynamicLoot").SetAny("whitelist", whiteList)
-	//return err
 }

@@ -2,14 +2,15 @@ package util
 
 import (
 	"fmt"
-	"github.com/buger/jsonparser"
+	"github.com/donkeywon/eft-spg/service/cfg/hook"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestConfigBox(t *testing.T) {
-	d, err := ReadConfigBox()
+	v, err := ReadConfigBox()
 	assert.NoError(t, err, "read fail")
-
-	fmt.Println(jsonparser.GetString(d, "bot", "presetBatch", "assault"))
+	err = hook.PostLoadHook(v)
+	assert.NoError(t, err, "hook fail")
+	fmt.Println(v.String())
 }

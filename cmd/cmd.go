@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/donkeywon/eft-spg/service/cfg"
+	"github.com/donkeywon/eft-spg/service/database"
 	"github.com/donkeywon/eft-spg/service/httpd"
 	"github.com/donkeywon/gtil/service"
 )
@@ -22,7 +23,7 @@ func New(config *Config) *Command {
 	}
 
 	c.AppendService(httpd.Name, httpd.New(config.Httpd))
-	//c.AppendService(database.Name, database.New(config.Database))
+	c.AppendService(database.Name, database.New(config.Database))
 	c.AppendService(cfg.Name, cfg.New(config.Cfg))
 
 	return c

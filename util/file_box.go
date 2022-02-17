@@ -1,10 +1,11 @@
 package util
 
 import (
-	"github.com/buger/jsonparser"
+	jsonvalue "github.com/Andrew-M-C/go.jsonvalue"
 	"github.com/donkeywon/gtil/util"
 	"github.com/gobuffalo/packd"
 	"github.com/gobuffalo/packr/v2"
+	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -14,11 +15,11 @@ var (
 	ImageBox    = packr.New("Image", "../assets/images")
 	ConfigBox   = packr.New("Config", "../cfg")
 
-	EmptyJsonNode = []byte("{}")
+	EmptyJsonNode = jsonvalue.MustUnmarshalString("{}")
 	PathSeparator = "/"
 )
 
-func ReadJsonBox(box *packr.Box) ([]byte, error) {
+func ReadJsonBox(box *packr.Box) (*jsonvalue.V, error) {
 	n := EmptyJsonNode
 	if box == nil {
 		return n, nil
@@ -32,13 +33,28 @@ func ReadJsonBox(box *packr.Box) ([]byte, error) {
 		}
 		filePathSplit[len(filePathSplit)-1] = fn
 
-		n2, err := GetFileHandler(fe).Handle(util.String2Bytes(fileInfo.String()))
+		bs, err := GetFileHandler(fe).Handle(util.String2Bytes(fileInfo.String()))
 		if err != nil {
-			return err
+			return errors.WithMessagef(err, ErrReadFileBox, filePath)
 		}
-		n, err = jsonparser.Set(n, n2, filePathSplit...)
+
+		v, err := jsonvalue.Unmarshal(bs)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, ErrReadFileBox, filePath)
+		}
+
+		if len(filePathSplit) == 1 {
+			_, err = n.Set(v).At(filePathSplit[0])
+		} else {
+			var at []interface{}
+			for _, p := range filePathSplit[1:] {
+				at = append(at, p)
+			}
+
+			_, err = n.Set(v).At(filePathSplit[0], at...)
+		}
+		if err != nil {
+			return errors.WithMessagef(err, ErrReadFileBox, filePath)
 		}
 
 		return nil
@@ -47,11 +63,11 @@ func ReadJsonBox(box *packr.Box) ([]byte, error) {
 	return n, err
 }
 
-func ReadConfigBox() ([]byte, error) {
+func ReadConfigBox() (*jsonvalue.V, error) {
 	return ReadJsonBox(ConfigBox)
 }
 
-func ReadDatabaseBox() ([]byte, error) {
+func ReadDatabaseBox() (*jsonvalue.V, error) {
 	return ReadJsonBox(DatabaseBox)
 }
 

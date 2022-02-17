@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/donkeywon/eft-spg/service"
+	"github.com/donkeywon/eft-spg/service/eft"
 	"github.com/donkeywon/eft-spg/util"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -18,7 +18,7 @@ func init() {
 func GetBotLimit(resp http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 
-	b, err := service.GetBotLimit(vars["type"])
+	b, err := eft.GetBotLimit(vars["type"])
 	if err != nil {
 		logger.Error("GetBotLimit fail", zap.Error(err))
 	}

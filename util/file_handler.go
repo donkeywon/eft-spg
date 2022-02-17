@@ -37,8 +37,7 @@ func (fn FileHandlerFn) Handle(bs []byte) ([]byte, error) {
 }
 
 func JsonFileHandler(bs []byte) ([]byte, error) {
-	rep := JsonCommentReg.ReplaceAll(bs, JsonCommentReplace)
-	return rep, nil
+	return JsonCommentReg.ReplaceAll(bs, JsonCommentReplace), nil
 }
 
 func UnknownFileHandler(bs []byte) ([]byte, error) {
