@@ -20,12 +20,12 @@ func GetBotLimit(resp http.ResponseWriter, req *http.Request) {
 
 	b, err := eft.GetBotLimit(vars["type"])
 	if err != nil {
-		logger.Error("GetBotLimit fail", zap.Error(err))
+		Logger.Error("GetBotLimit fail", zap.Error(err))
 	}
 
 	err = util.DoResponseJson(b, resp)
 	if err != nil {
-		logger.Error("Response fail", zap.Error(err))
+		Logger.Error("Response fail", zap.Error(err))
 	}
 }
 

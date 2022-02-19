@@ -14,13 +14,14 @@ var (
 	DatabaseBox = packr.New("Database", "../assets/database")
 	ImageBox    = packr.New("Image", "../assets/images")
 	ConfigBox   = packr.New("Config", "../cfg")
+)
 
-	EmptyJsonNode = jsonvalue.MustUnmarshalString("{}")
+var (
 	PathSeparator = "/"
 )
 
 func ReadJsonBox(box *packr.Box) (*jsonvalue.V, error) {
-	n := EmptyJsonNode
+	n := GetEmptyJsonNode()
 	if box == nil {
 		return n, nil
 	}
@@ -35,7 +36,7 @@ func ReadJsonBox(box *packr.Box) (*jsonvalue.V, error) {
 
 		bs, err := GetFileHandler(fe).Handle(util.String2Bytes(fileInfo.String()))
 		if err != nil {
-			return errors.WithMessagef(err, ErrReadFileBox, filePath)
+			return errors.Wrapf(err, ErrReadFileBox, filePath)
 		}
 
 		v, err := jsonvalue.Unmarshal(bs)
@@ -54,7 +55,8 @@ func ReadJsonBox(box *packr.Box) (*jsonvalue.V, error) {
 			_, err = n.Set(v).At(filePathSplit[0], at...)
 		}
 		if err != nil {
-			return errors.WithMessagef(err, ErrReadFileBox, filePath)
+			return errors.Wrapf(err, ErrReadFileBox, filePath)
+			//return err2.Wrapf(err, ErrReadFileBox, filePath)
 		}
 
 		return nil
@@ -69,12 +71,4 @@ func ReadConfigBox() (*jsonvalue.V, error) {
 
 func ReadDatabaseBox() (*jsonvalue.V, error) {
 	return ReadJsonBox(DatabaseBox)
-}
-
-func FileNameAndExt(fileName string) (string, string) {
-	splited := strings.Split(fileName, ".")
-	if len(splited) < 2 {
-		return fileName, ""
-	}
-	return strings.Join(splited[0:len(splited)-1], "."), splited[len(splited)-1]
 }

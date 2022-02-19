@@ -2,12 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/donkeywon/eft-spg/cmd"
 	"github.com/donkeywon/eft-spg/controller"
 	"github.com/donkeywon/gtil/logger"
+	"github.com/donkeywon/gtil/logger/core"
 	"github.com/donkeywon/gtil/service"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
@@ -18,10 +17,8 @@ import (
 )
 
 func main() {
-	lc := logger.DefaultConsoleConfig()
-	lc.Development = false
-	lc.Level = zap.NewAtomicLevelAt(zap.InfoLevel)
-	l, _ := logger.FromConfig(lc)
+	l, _ := logger.FromConfig(logger.DefaultConsoleConfig(), zap.WrapCore(core.NewStackExtractCore))
+	zap.ReplaceGlobals(l)
 	controller.WithLogger(l)
 
 	config := cmd.NewConfig()
@@ -40,8 +37,7 @@ func main() {
 	c := cmd.New(config)
 	err = service.DoOpen(c, context.Background(), l)
 	if err != nil {
-		l.Error("Start fail", zap.String("err", fmt.Sprintf("%+v", errors.Cause(err))))
-		fmt.Printf("%+v", err)
+		l.Error("Start fail", zap.Error(err))
 		return
 	}
 

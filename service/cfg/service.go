@@ -1,6 +1,7 @@
 package cfg
 
 import (
+	jsonvalue "github.com/Andrew-M-C/go.jsonvalue"
 	"github.com/donkeywon/eft-spg/service/cfg/hook"
 	"github.com/donkeywon/eft-spg/util"
 	"github.com/donkeywon/gtil/service"
@@ -11,7 +12,7 @@ const (
 )
 
 var (
-	Data = util.EmptyJsonNode
+	Data = jsonvalue.NewObject()
 )
 
 type svc struct {
