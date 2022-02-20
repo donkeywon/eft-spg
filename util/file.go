@@ -1,23 +1,41 @@
 package util
 
 import (
-	jsonvalue "github.com/Andrew-M-C/go.jsonvalue"
 	"os"
 	"strings"
 )
 
-func GetEmptyJsonNode() *jsonvalue.V {
-	return jsonvalue.NewObject()
+func GetEmptyJsonNode() JsonNode {
+	return NewJsonNode()
 }
 
-func GetEmptyJsonArray() *jsonvalue.V {
-	return jsonvalue.NewArray()
+func GetEmptyJsonArray() JsonArray {
+	return NewJsonArray()
 }
 
-func FileOrPathExist(path string) bool {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+func FileExist(path string) bool {
+	info, err := os.Stat(path)
+	if os.IsNotExist(err) {
 		return false
 	}
+
+	if info.IsDir() {
+		return false
+	}
+
+	return true
+}
+
+func DirExist(path string) bool {
+	info, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	if !info.IsDir() {
+		return false
+	}
+
 	return true
 }
 

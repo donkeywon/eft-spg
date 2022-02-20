@@ -38,7 +38,7 @@ func (s *Svc) Name() string {
 }
 
 func (s *Svc) Open() error {
-	if !util.FileOrPathExist(s.Config.Path) {
+	if !util.DirExist(s.Config.Path) {
 		err := os.MkdirAll(s.Config.Path, os.ModePerm)
 		if err != nil {
 			return errors.Wrapf(err, util.ErrMkdirFail, s.Config.Path)
@@ -77,7 +77,7 @@ func (s *Svc) LoadProfile(sessID string) error {
 	var err error
 	filename := FullProfileFileName(sessID)
 	path := filepath.Join(s.Config.Path, filename)
-	if util.FileOrPathExist(path) {
+	if util.FileExist(path) {
 		bs, err := ioutil.ReadFile(path)
 		if err != nil {
 			return errors.Wrapf(err, util.ErrReadProfile, filename)

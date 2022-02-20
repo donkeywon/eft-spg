@@ -33,11 +33,11 @@ func (s *Svc) Name() string {
 func (s *Svc) Open() error {
 	s.Info("Opening")
 	defer s.Info("Opened")
-	d, err := util.ReadDatabaseBox()
+	_, err := util.ReadDatabaseBox()
 	if err != nil {
 		return err
 	}
-	database = d
+	//database = d
 
 	return err
 }
