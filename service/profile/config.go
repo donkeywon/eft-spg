@@ -1,4 +1,4 @@
-package save
+package profile
 
 const (
 	DefaultPath = "user/profiles/"

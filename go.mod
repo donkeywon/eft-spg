@@ -1,10 +1,10 @@
-module github.com/donkeywon/eft-spg
+module eft-spg
 
 go 1.17
 
 require (
 	github.com/Andrew-M-C/go.jsonvalue v1.2.0
-	github.com/donkeywon/gtil v0.1.5
+	github.com/donkeywon/gtil v0.1.7
 	github.com/gobuffalo/packd v1.0.1
 	github.com/gobuffalo/packr/v2 v2.8.3
 	github.com/gorilla/mux v1.8.0
@@ -15,7 +15,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
-//replace github.com/donkeywon/gtil v0.1.5 => /Users/donkeywon/code/go/gtil
+//replace github.com/donkeywon/gtil v0.1.6 => D:/workspace/code/go/gtil
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

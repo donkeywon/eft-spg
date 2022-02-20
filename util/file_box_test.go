@@ -1,8 +1,8 @@
 package util
 
 import (
+	"eft-spg/service/cfg/hook"
 	"fmt"
-	"github.com/donkeywon/eft-spg/service/cfg/hook"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

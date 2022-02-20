@@ -1,13 +1,13 @@
 package cmd
 
 import (
-	"github.com/donkeywon/eft-spg/service/cfg"
-	"github.com/donkeywon/eft-spg/service/database"
+	"eft-spg/service/cfg"
+	"eft-spg/service/database"
 	"github.com/donkeywon/gtil/httpd"
 )
 
 const (
-	DefaultAddr = ":1408"
+	DefaultAddr = "127.0.0.1:1408"
 )
 
 type Config struct {

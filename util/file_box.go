@@ -56,7 +56,6 @@ func ReadJsonBox(box *packr.Box) (*jsonvalue.V, error) {
 		}
 		if err != nil {
 			return errors.Wrapf(err, ErrReadFileBox, filePath)
-			//return err2.Wrapf(err, ErrReadFileBox, filePath)
 		}
 
 		return nil

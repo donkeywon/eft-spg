@@ -1,9 +1,9 @@
 package cfg
 
 import (
+	"eft-spg/service/cfg/hook"
+	"eft-spg/util"
 	jsonvalue "github.com/Andrew-M-C/go.jsonvalue"
-	"github.com/donkeywon/eft-spg/service/cfg/hook"
-	"github.com/donkeywon/eft-spg/util"
 	"github.com/donkeywon/gtil/service"
 )
 
@@ -12,26 +12,26 @@ const (
 )
 
 var (
-	Data = jsonvalue.NewObject()
+	cfg = jsonvalue.NewObject()
 )
 
-type svc struct {
+type Svc struct {
 	*service.BaseService
-	config *Config
+	Config *Config
 }
 
-func New(config *Config) service.Service {
-	return &svc{
+func New(config *Config) *Svc {
+	return &Svc{
 		BaseService: service.NewBase(),
-		config:      config,
+		Config:      config,
 	}
 }
 
-func (s *svc) Name() string {
+func (s *Svc) Name() string {
 	return Name
 }
 
-func (s *svc) Open() error {
+func (s *Svc) Open() error {
 	c, err := util.ReadConfigBox()
 	if err != nil {
 		return err
@@ -41,15 +41,19 @@ func (s *svc) Open() error {
 		return err
 	}
 
-	Data = c
+	cfg = c
 
 	return nil
 }
 
-func (s *svc) Close() error {
+func (s *Svc) Close() error {
 	return nil
 }
 
-func (s *svc) Shutdown() error {
+func (s *Svc) Shutdown() error {
 	return nil
+}
+
+func GetConfig() *jsonvalue.V {
+	return cfg
 }

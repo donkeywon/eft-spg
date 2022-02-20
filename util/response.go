@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/json"
+	jsonvalue "github.com/Andrew-M-C/go.jsonvalue"
 	"github.com/donkeywon/gtil/util"
 	"io"
 	"net/http"
@@ -131,17 +132,34 @@ func DoResponse(errCode int, errMsg string, data interface{}, w http.ResponseWri
 }
 
 func DoResponseJson(data interface{}, w http.ResponseWriter) error {
-	w.Header().Set(HeaderKeyContentType, ContentTypeJson)
 	enc, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
 
-	return DoResponseDirect(enc, http.StatusOK, w)
+	return DoResponseJsonBytes(enc, w)
+}
+
+func DoResponseJsonValue(v *jsonvalue.V, w http.ResponseWriter) error {
+	enc, err := v.Marshal()
+	if err != nil {
+		return err
+	}
+
+	return DoResponseJsonBytes(enc, w)
+}
+
+func DoResponseJsonString(data string, w http.ResponseWriter) error {
+	return DoResponseJsonBytes(util.String2Bytes(data), w)
+}
+
+func DoResponseJsonBytes(data []byte, w http.ResponseWriter) error {
+	w.Header().Set(HeaderKeyContentType, ContentTypeJson)
+
+	return DoResponseDirect(data, http.StatusOK, w)
 }
 
 func DoResponseZlibJson(data interface{}, w http.ResponseWriter) error {
-	w.Header().Set(HeaderKeyContentType, ContentTypeJson)
 	j, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -158,7 +176,7 @@ func DoResponseZlibJson(data interface{}, w http.ResponseWriter) error {
 		return err
 	}
 
-	return DoResponseDirect(out.Bytes(), http.StatusOK, w)
+	return DoResponseJsonBytes(out.Bytes(), w)
 }
 
 func DoResponseDirect(data []byte, httpCode int, w http.ResponseWriter) error {

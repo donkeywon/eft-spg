@@ -2,8 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/donkeywon/eft-spg/cmd"
-	"github.com/donkeywon/eft-spg/controller"
+	"eft-spg/cmd"
 	"github.com/donkeywon/gtil/logger"
 	"github.com/donkeywon/gtil/logger/core"
 	"github.com/donkeywon/gtil/service"
@@ -19,7 +18,6 @@ import (
 func main() {
 	l, _ := logger.FromConfig(logger.DefaultConsoleConfig(), zap.WrapCore(core.NewStackExtractCore))
 	zap.ReplaceGlobals(l)
-	controller.WithLogger(l)
 
 	config := cmd.NewConfig()
 	f, err := ioutil.ReadFile("./config.yaml")
@@ -40,6 +38,8 @@ func main() {
 		l.Error("Start fail", zap.Error(err))
 		return
 	}
+
+	l.Info("Start success")
 
 	signalCh := make(chan os.Signal)
 	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
