@@ -3,7 +3,7 @@ package cfg
 import (
 	"eft-spg/service/cfg/hook"
 	"eft-spg/util"
-	jsonvalue "github.com/Andrew-M-C/go.jsonvalue"
+	"github.com/bytedance/sonic/ast"
 	"github.com/donkeywon/gtil/service"
 )
 
@@ -12,7 +12,7 @@ const (
 )
 
 var (
-	cfg = jsonvalue.NewObject()
+	cfg *ast.Node
 )
 
 type Svc struct {
@@ -54,6 +54,6 @@ func (s *Svc) Shutdown() error {
 	return nil
 }
 
-func GetConfig() *jsonvalue.V {
+func GetConfig() *ast.Node {
 	return cfg
 }

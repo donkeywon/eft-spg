@@ -1,7 +1,7 @@
 package hook
 
 import (
-	jsonvalue "github.com/Andrew-M-C/go.jsonvalue"
+	"github.com/bytedance/sonic/ast"
 	"go.uber.org/multierr"
 )
 
@@ -11,13 +11,13 @@ func RegisterHook(hk HookFn) {
 	_hooks = append(_hooks, hk)
 }
 
-type HookFn func(node *jsonvalue.V) error
+type HookFn func(node *ast.Node) error
 
-func (hkf HookFn) DoHook(node *jsonvalue.V) error {
+func (hkf HookFn) DoHook(node *ast.Node) error {
 	return hkf(node)
 }
 
-func PostLoadHook(n *jsonvalue.V) error {
+func PostLoadHook(n *ast.Node) error {
 	var err error
 	for _, _hook := range _hooks {
 		err = multierr.Append(err, _hook.DoHook(n))

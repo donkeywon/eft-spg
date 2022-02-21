@@ -1,16 +1,22 @@
 package database
 
 import (
-	"bytes"
-	"eft-spg/util"
-	"fmt"
-	"github.com/minio/simdjson-go"
-	"github.com/pkg/errors"
+	"github.com/donkeywon/gtil/logger"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"path/filepath"
 	"testing"
 )
+
+func TestSvc_Open(t *testing.T) {
+	l, _ := logger.DefaultConsole()
+	config := NewConfig()
+	config.Path = "/Users/donkeywon/code/go/eft-spg/assets/database"
+
+	svc := New(config)
+	svc.WithLogger(svc, l)
+	err := svc.Open()
+	assert.NoError(t, err)
+	GetProfileEditions()
+}
 
 //func TestSvc_Open(t *testing.T) {
 //	n := util.GetEmptyJsonNode()
@@ -217,110 +223,3 @@ import (
 //	_, err = n.GetNodeByPath("nots", "types", "bossgluhar")
 //	assert.Error(t, err)
 //}
-
-func TestSvc_Open(t *testing.T) {
-
-	//bs, _ := ioutil.ReadFile("assets/database/locations/rezervbase/loot.json")
-	////bs, _ := ioutil.ReadFile("assets/database/hideout/areas.json")
-	//
-	//pj, err := simdjson.Parse(bs, nil)
-	//assert.NoError(t, err)
-	////fmt.Println(util2.Bytes2String(pj.Message))
-	//
-	//it := pj.Iter()
-	//
-	//it.AdvanceIter(&it)
-	//
-	//it.AdvanceInto()
-	//var elem *simdjson.Element
-	//e, _ := it.FindElement(elem, "dynamic")
-	//
-	//arr, _ := e.Iter.Array(nil)
-	//arr.ForEach(func(i simdjson.Iter) {
-	//	elem, _ = i.FindElement(elem, "id")
-	//	fmt.Println(elem.Iter.String())
-	//})
-	//
-	//fmt.Println(e)
-
-	//ns := []*simdjson.ParsedJson{}
-	//
-	////start := time.Now().UnixNano()
-	//filepath.Walk("assets/database", func(path string, info fs.FileInfo, err error) error {
-	//	if info.IsDir() {
-	//		return nil
-	//	}
-	//
-	//	filePathSplit := strings.Split(path, string(os.PathSeparator))
-	//	fn, fe := util.FileNameAndExt(filePathSplit[len(filePathSplit)-1])
-	//	if fe != util.JsonFileExt {
-	//		return nil
-	//	}
-	//	filePathSplit[len(filePathSplit)-1] = fn
-	//
-	//	bs, err := ioutil.ReadFile(path)
-	//	if err != nil {
-	//		return errors.Wrapf(err, util.ErrReadFileBox, path)
-	//	}
-	//
-	//	bs, err = util.GetFileHandler(fe).Handle(bs)
-	//	if err != nil {
-	//		return errors.Wrapf(err, util.ErrReadFileBox, path)
-	//	}
-	//
-	//	pj, err := simdjson.Parse(bs, nil)
-	//	if err != nil {
-	//		return errors.Wrapf(err, util.ErrReadFileBox, path)
-	//	}
-	//
-	//	ns = append(ns, pj)
-	//
-	//	return nil
-	//})
-	//time.Sleep(time.Second * 100)
-
-	bs, err := readDirToJson("assets/database")
-	fmt.Println(string(bs))
-	assert.NoError(t, err)
-	_, err = simdjson.Parse(bs, nil)
-	assert.NoError(t, err)
-}
-
-func readDirToJson(path string) ([]byte, error) {
-	if util.FileExist(path) {
-		return ioutil.ReadFile(path)
-	}
-
-	if !util.DirExist(path) {
-		return nil, errors.New("Path not exist")
-	}
-
-	infos, err := ioutil.ReadDir(path)
-	if err != nil {
-		return nil, err
-	}
-
-	bs := &bytes.Buffer{}
-	bs.WriteByte('{')
-	for _, info := range infos {
-		fn, fe := util.FileNameAndExt(info.Name())
-		if fe != util.JsonFileExt {
-			continue
-		}
-
-		bs.WriteString(`"` + fn + `":`)
-		bs1, err := readDirToJson(filepath.Join(path, info.Name()))
-		if err != nil {
-			return nil, err
-		}
-
-		bs.Write(bs1)
-		bs.WriteByte(',')
-	}
-	if bs.Bytes()[bs.Len()-1] == ',' {
-		bs.Truncate(bs.Len() - 1)
-	}
-	bs.WriteByte('}')
-
-	return bs.Bytes(), nil
-}

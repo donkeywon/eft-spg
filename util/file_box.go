@@ -1,69 +1,62 @@
 package util
 
 import (
+	"github.com/bytedance/sonic/ast"
+	"github.com/donkeywon/gtil/util"
+	"github.com/gobuffalo/packd"
 	"github.com/gobuffalo/packr/v2"
+	"strings"
 )
 
 var (
-	AssetsBox   = packr.New("Assets", "../assets")
-	DatabaseBox = packr.New("Database", "../assets/database")
-	ImageBox    = packr.New("Image", "../assets/images")
-	ConfigBox   = packr.New("Config", "../cfg")
+	ConfigBox = packr.New("Config", "../cfg")
 )
 
 var (
 	PathSeparator = "/"
 )
 
-func ReadJsonBox(box *packr.Box) (JsonNode, error) {
-	return nil, nil
-	//n := GetEmptyJsonNode()
-	//if box == nil {
-	//	return n, nil
-	//}
-	//
-	//err := box.Walk(func(filePath string, fileInfo packd.File) error {
-	//	filePathSplit := strings.Split(filePath, PathSeparator)
-	//	fn, fe := FileNameAndExt(filePathSplit[len(filePathSplit)-1])
-	//	if fe != JsonFileExt {
-	//		return nil
-	//	}
-	//	filePathSplit[len(filePathSplit)-1] = fn
-	//
-	//	bs, err := GetFileHandler(fe).Handle(util.String2Bytes(fileInfo.String()))
-	//	if err != nil {
-	//		return errors.Wrapf(err, ErrReadFileBox, filePath)
-	//	}
-	//
-	//	v, err := jsonvalue.Unmarshal(bs)
-	//	if err != nil {
-	//		return errors.Wrapf(err, ErrReadFileBox, filePath)
-	//	}
-	//
-	//	if len(filePathSplit) == 1 {
-	//		_, err = n.Set(v).At(filePathSplit[0])
-	//	} else {
-	//		var at []interface{}
-	//		for _, p := range filePathSplit[1:] {
-	//			at = append(at, p)
-	//		}
-	//
-	//		_, err = n.Set(v).At(filePathSplit[0], at...)
-	//	}
-	//	if err != nil {
-	//		return errors.Wrapf(err, ErrReadFileBox, filePath)
-	//	}
-	//
-	//	return nil
-	//})
-	//
-	//return n, err
+func ReadJsonBox(box *packr.Box) (*ast.Node, error) {
+	n := GetEmptyJsonNode()
+	if box == nil {
+		return &n, nil
+	}
+
+	err := box.Walk(func(filePath string, fileInfo packd.File) error {
+		filePathSplit := strings.Split(filePath, PathSeparator)
+		fn, fe := FileNameAndExt(filePathSplit[len(filePathSplit)-1])
+		if fe != JsonFileExt {
+			return nil
+		}
+
+		n1 := &n
+		for i := 0; i < len(filePathSplit)-1; i++ {
+			if !n1.Get(filePathSplit[i]).Exists() {
+				newN := GetEmptyJsonNode()
+				_, err := n1.Set(filePathSplit[i], newN)
+				if err != nil {
+					return err
+				}
+			}
+
+			n1 = n1.Get(filePathSplit[i])
+		}
+
+		n2, err := GetFileHandler(fe).Handle(util.String2Bytes(fileInfo.String()))
+		if err != nil {
+			return err
+		}
+		_, err = n1.SetAny(fn, n2.(ast.Node))
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return &n, err
 }
 
-func ReadConfigBox() (JsonNode, error) {
+func ReadConfigBox() (*ast.Node, error) {
 	return ReadJsonBox(ConfigBox)
-}
-
-func ReadDatabaseBox() (JsonNode, error) {
-	return ReadJsonBox(DatabaseBox)
 }

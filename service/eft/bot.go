@@ -4,10 +4,10 @@ import (
 	"eft-spg/service/cfg"
 )
 
-func GetBotLimit(typ string) (int, error) {
+func GetBotLimit(typ string) (int64, error) {
 	if typ == "cursedAssault" || typ == "assaultGroup" {
 		typ = "assault"
 	}
 
-	return cfg.GetConfig().MustGet("bot", "presetBatch", typ).Int(), nil
+	return cfg.GetConfig().GetByPath("bot", "presetBatch", typ).Int64()
 }

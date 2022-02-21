@@ -35,8 +35,11 @@ func New(config *httpd.Config) *Svc {
 		BaseService: service.NewBase(),
 		httpd:       httpd.New(config),
 		Config:      config,
+		routers:     make(map[string]func(http.ResponseWriter, *http.Request)),
+		middleWares: []mux.MiddlewareFunc{},
 	}
-	s.httpd.SetHandler(s.GetRouter())
+
+	s.registerRouter()
 
 	return s
 }
@@ -46,7 +49,14 @@ func (s *Svc) Name() string {
 }
 
 func (s *Svc) Open() error {
-	return multierr.Combine(s.httpd.Open(), s.httpd.LastError())
+	s.Info("Opening")
+	s.httpd.SetHandler(s.GetRouter())
+	err := multierr.Combine(s.httpd.Open(), s.httpd.LastError())
+	if err != nil {
+		return err
+	}
+	s.Info("Opened", zap.String("addr", s.Config.Addr))
+	return nil
 }
 
 func (s *Svc) Close() error {
@@ -77,6 +87,35 @@ func (s *Svc) GetRouter() *mux.Router {
 	}
 
 	return router
+}
+
+func (s *Svc) registerRouter() {
+	s.registerBotRouter()
+	s.registerBundleRouter()
+	s.registerCustomizationRouter()
+	s.registerDataRouter()
+	s.registerDialogRouter()
+	s.registerGameRouter()
+	s.registerHealthRouter()
+	s.registerImageRouter()
+	s.registerInraidRouter()
+	s.registerInsuranceRouter()
+	s.registerItemEventRouter()
+	s.registerLauncherRouter()
+	s.registerLocationRouter()
+	s.registerMatchRouter()
+	s.registerNotifierRouter()
+	s.registerPresetBuildRouter()
+	s.registerProfileRouter()
+	s.registerQuestRouter()
+	s.registerRagfairRouter()
+	s.registerTraderRouter()
+	s.registerWeatherRouter()
+}
+
+func (s *Svc) registerMiddleware() {
+	s.RegisterMiddleware(s.loggingMiddleware)
+	s.RegisterMiddleware(s.authMiddleware)
 }
 
 func (s *Svc) backendUrl() string {

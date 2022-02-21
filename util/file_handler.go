@@ -1,6 +1,7 @@
 package util
 
 import (
+	"github.com/bytedance/sonic"
 	"regexp"
 )
 
@@ -30,16 +31,17 @@ func GetFileHandler(fileExt string) FileHandlerFn {
 	return _fileHandler[fileExt]
 }
 
-type FileHandlerFn func(bs []byte) ([]byte, error)
+type FileHandlerFn func(bs []byte) (interface{}, error)
 
-func (fn FileHandlerFn) Handle(bs []byte) ([]byte, error) {
+func (fn FileHandlerFn) Handle(bs []byte) (interface{}, error) {
 	return fn(bs)
 }
 
-func JsonFileHandler(bs []byte) ([]byte, error) {
-	return JsonCommentReg.ReplaceAll(bs, JsonCommentReplace), nil
+func JsonFileHandler(bs []byte) (interface{}, error) {
+	rep := JsonCommentReg.ReplaceAll(bs, JsonCommentReplace)
+	return sonic.Get(rep)
 }
 
-func UnknownFileHandler(bs []byte) ([]byte, error) {
+func UnknownFileHandler(bs []byte) (interface{}, error) {
 	return nil, nil
 }

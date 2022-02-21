@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/json"
-	jsonvalue "github.com/Andrew-M-C/go.jsonvalue"
+	"github.com/bytedance/sonic/ast"
 	"github.com/donkeywon/gtil/util"
 	"io"
 	"net/http"
@@ -140,8 +140,8 @@ func DoResponseJson(data interface{}, w http.ResponseWriter) error {
 	return DoResponseJsonBytes(enc, w)
 }
 
-func DoResponseJsonValue(v *jsonvalue.V, w http.ResponseWriter) error {
-	enc, err := v.Marshal()
+func DoResponseJsonValue(v *ast.Node, w http.ResponseWriter) error {
+	enc, err := v.MarshalJSON()
 	if err != nil {
 		return err
 	}

@@ -1,16 +1,17 @@
 package util
 
 import (
+	"github.com/bytedance/sonic/ast"
 	"os"
 	"strings"
 )
 
-func GetEmptyJsonNode() JsonNode {
-	return NewJsonNode()
+func GetEmptyJsonNode() ast.Node {
+	return ast.NewObject([]ast.Pair{})
 }
 
-func GetEmptyJsonArray() JsonArray {
-	return NewJsonArray()
+func GetEmptyJsonArray() ast.Node {
+	return ast.NewArray([]ast.Node{})
 }
 
 func FileExist(path string) bool {

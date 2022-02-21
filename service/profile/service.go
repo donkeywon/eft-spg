@@ -2,7 +2,8 @@ package profile
 
 import (
 	"eft-spg/util"
-	jsonvalue "github.com/Andrew-M-C/go.jsonvalue"
+	"github.com/bytedance/sonic"
+	"github.com/bytedance/sonic/ast"
 	"github.com/donkeywon/gtil/service"
 	"github.com/pkg/errors"
 	"io/fs"
@@ -18,7 +19,7 @@ const (
 )
 
 var (
-	profiles = make(map[string]*jsonvalue.V)
+	profiles = make(map[string]*ast.Node)
 )
 
 type Svc struct {
@@ -83,12 +84,12 @@ func (s *Svc) LoadProfile(sessID string) error {
 			return errors.Wrapf(err, util.ErrReadProfile, filename)
 		}
 
-		v, err := jsonvalue.Unmarshal(bs)
+		v, err := sonic.Get(bs)
 		if err != nil {
 			return errors.Wrapf(err, util.ErrReadProfile, filename)
 		}
 
-		SetProfile(sessID, v)
+		SetProfile(sessID, &v)
 	}
 
 	return err
@@ -102,18 +103,18 @@ func (s *Svc) Shutdown() error {
 	return nil
 }
 
-func (s *Svc) InitialProfile() *jsonvalue.V {
+func (s *Svc) InitialProfile() *ast.Node {
 	p := util.GetEmptyJsonNode()
-	p.Set(util.GetEmptyJsonNode()).At("pmc")
-	p.Set(util.GetEmptyJsonNode()).At("scav")
-	return p
+	p.Set("pmc", util.GetEmptyJsonNode())
+	p.Set("scav", util.GetEmptyJsonNode())
+	return &p
 }
 
-func GetProfile(sessID string) *jsonvalue.V {
+func GetProfile(sessID string) *ast.Node {
 	return profiles[sessID]
 }
 
-func SetProfile(sessID string, v *jsonvalue.V) {
+func SetProfile(sessID string, v *ast.Node) {
 	profiles[sessID] = v
 }
 
@@ -132,7 +133,12 @@ func (s *Svc) SaveProfile(sessID string) error {
 		return errors.Wrapf(err, util.ErrSaveProfile, FullProfileFileName(sessID))
 	}
 
-	_, err = f.Write(p.Bytes())
+	bs, err := p.MarshalJSON()
+	if err != nil {
+		return errors.Wrapf(err, util.ErrSaveProfile, FullProfileFileName(sessID))
+	}
+
+	_, err = f.Write(bs)
 	if err != nil {
 		return errors.Wrapf(err, util.ErrSaveProfile, FullProfileFileName(sessID))
 	}
@@ -140,39 +146,46 @@ func (s *Svc) SaveProfile(sessID string) error {
 	return nil
 }
 
-func (s *Svc) GetProfileItemByPath(sesssID string, path interface{}, paths ...interface{}) *jsonvalue.V {
+func (s *Svc) GetProfileItemByPath(sesssID string, paths ...interface{}) *ast.Node {
 	p := GetProfile(sesssID)
 	if p == nil {
 		return nil
 	}
 
-	i, err := p.Get(path, paths...)
-	if err != nil {
+	n := p.GetByPath(paths)
+	if n.Check() != nil {
 		return nil
 	}
 
-	return i
+	return n
 }
 
-func (s *Svc) GetCharacterProfile(sessID string, typ string) *jsonvalue.V {
+func (s *Svc) GetCharacterProfile(sessID string, typ string) *ast.Node {
 	return s.GetProfileItemByPath(sessID, "characters", typ)
 }
 
-func (s *Svc) GetPMCProfile(sessID string) *jsonvalue.V {
+func (s *Svc) GetPMCProfile(sessID string) *ast.Node {
 	return s.GetCharacterProfile(sessID, "pmc")
 }
 
-func (s *Svc) GetScavProfile(sessID string) *jsonvalue.V {
+func (s *Svc) GetScavProfile(sessID string) *ast.Node {
 	return s.GetCharacterProfile(sessID, "scav")
 }
 
-func (s *Svc) SetScavProfile(sessID string, sp *jsonvalue.V) error {
+func (s *Svc) SetScavProfile(sessID string, sp *ast.Node) error {
 	p := GetProfile(sessID)
 	if p == nil {
 		return nil
 	}
 
-	_, err := p.Set(sp).At("characters", "scav")
+	if p.Get("characters").Check() != nil {
+		_, err := p.Set("characters", util.GetEmptyJsonNode())
+		if err != nil {
+			return errors.Wrapf(err, util.ErrSetScavProfile, sessID)
+		}
+	}
+
+	_, err := p.Get("characters").Set("scav", *sp)
 	if err != nil {
 		return errors.Wrapf(err, util.ErrSetScavProfile, sessID)
 	}
@@ -180,27 +193,29 @@ func (s *Svc) SetScavProfile(sessID string, sp *jsonvalue.V) error {
 	return nil
 }
 
-func (s *Svc) GetCompleteProfile(sessID string) *jsonvalue.V {
+func (s *Svc) GetCompleteProfile(sessID string) *ast.Node {
 	v := util.GetEmptyJsonArray()
 
 	if !s.IsWipe(sessID) {
-		return v
+		return &v
 	}
 
+	i := 0
 	pmcProfile := s.GetPMCProfile(sessID)
 	if pmcProfile != nil {
-		v.Append(pmcProfile)
+		v.SetByIndex(i, *pmcProfile)
+		i++
 	}
 
 	scavProfile := s.GetScavProfile(sessID)
 	if scavProfile != nil {
-		v.Append(scavProfile)
+		v.SetByIndex(i, *scavProfile)
 	}
 
-	return v
+	return &v
 }
 
-func (s *Svc) GetProfileInfo(sessID string) *jsonvalue.V {
+func (s *Svc) GetProfileInfo(sessID string) *ast.Node {
 	return s.GetProfileItemByPath(sessID, "info")
 }
 
@@ -214,7 +229,17 @@ func (s *Svc) IsWipe(sessID string) bool {
 		return false
 	}
 
-	return p.MustGet("info", "wipe").Bool()
+	n := p.Get("info")
+	if n.Check() != nil {
+		return false
+	}
+
+	w, err := n.Get("wipe").Bool()
+	if err != nil {
+		return false
+	}
+
+	return w
 }
 
 func (s *Svc) FullPath(sessID string) string {
