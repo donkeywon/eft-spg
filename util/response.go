@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/json"
+	"github.com/bytedance/sonic"
 	"github.com/bytedance/sonic/ast"
 	"github.com/donkeywon/gtil/util"
 	"io"
@@ -32,6 +33,10 @@ var _httpResponseMsgMap = map[int]string{
 	ResponseCode404:                 "UNHANDLED REQUEST",
 }
 
+var (
+	_pool = NewPool()
+)
+
 func GetResponseMsg(code int) string {
 	return _httpResponseMsgMap[code]
 }
@@ -41,10 +46,6 @@ type httpResponse struct {
 	ErrMsg  string      `json:"errmsg"`
 	Data    interface{} `json:"data"`
 }
-
-var (
-	_pool = NewPool()
-)
 
 func GetResponseWrapper() *httpResponseWrapper {
 	hr := _pool.Get().(*httpResponseWrapper)
@@ -160,7 +161,7 @@ func DoResponseJsonBytes(data []byte, w http.ResponseWriter) error {
 }
 
 func DoResponseZlibJson(data interface{}, w http.ResponseWriter) error {
-	j, err := json.Marshal(data)
+	j, err := sonic.Marshal(data)
 	if err != nil {
 		return err
 	}
@@ -170,8 +171,9 @@ func DoResponseZlibJson(data interface{}, w http.ResponseWriter) error {
 		return err
 	}
 
-	var out bytes.Buffer
-	_, err = io.Copy(&out, zr)
+	out := GetBuffer()
+	defer out.Free()
+	_, err = io.Copy(out, zr)
 	if err != nil {
 		return err
 	}

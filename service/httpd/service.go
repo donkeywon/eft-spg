@@ -1,6 +1,7 @@
 package httpd
 
 import (
+	"compress/zlib"
 	"eft-spg/util"
 	"fmt"
 	"github.com/donkeywon/gtil/httpd"
@@ -40,6 +41,7 @@ func New(config *httpd.Config) *Svc {
 	}
 
 	s.registerRouter()
+	s.registerMiddleware()
 
 	return s
 }
@@ -79,7 +81,7 @@ func (s *Svc) GetRouter() *mux.Router {
 	router := mux.NewRouter()
 
 	for path, f := range s.routers {
-		router.HandleFunc(path, f).Methods(Methods...)
+		router.HandleFunc(path, s.responseLogger(http.HandlerFunc(f))).Methods(Methods...)
 	}
 
 	for _, m := range s.middleWares {
@@ -116,6 +118,7 @@ func (s *Svc) registerRouter() {
 func (s *Svc) registerMiddleware() {
 	s.RegisterMiddleware(s.loggingMiddleware)
 	s.RegisterMiddleware(s.authMiddleware)
+	//s.RegisterMiddleware(s.decodeMiddleware)
 }
 
 func (s *Svc) backendUrl() string {
@@ -125,6 +128,31 @@ func (s *Svc) backendUrl() string {
 func (s *Svc) loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.Info("Handle req", zap.String("url", r.RequestURI))
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Svc) decodeMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			bs := util.GetBuffer()
+			defer bs.Free()
+
+			_, err := bs.ReadFrom(r.Body)
+			if err != nil {
+				s.Error("Read body fail", zap.String("url", r.RequestURI), zap.Error(err))
+			}
+			err = r.Body.Close()
+			if err != nil {
+				s.Error("Close body fail", zap.String("url", r.RequestURI), zap.Error(err))
+			}
+
+			zr, err := zlib.NewReader(bs)
+			r.Body = zr
+		}
+
+		// TODO PUT
 
 		next.ServeHTTP(w, r)
 	})
@@ -143,8 +171,34 @@ func (s *Svc) authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Svc) logRespErr(err error, r *http.Request) {
-	if err != nil {
-		s.Error("Response fail", zap.String("url", r.RequestURI), zap.Error(err))
+func (s *Svc) responseLogger(h http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		loggingRW := &loggingResponseWriter{
+			ResponseWriter: w,
+		}
+		h.ServeHTTP(loggingRW, r)
+		if loggingRW.err != nil {
+			s.Error("Response fail", zap.String("url", r.RequestURI), zap.Int("code", loggingRW.statusCode), zap.Error(loggingRW.err))
+		}
 	}
+}
+
+type loggingResponseWriter struct {
+	http.ResponseWriter
+
+	statusCode int
+	err        error
+}
+
+func (w *loggingResponseWriter) WriteHeader(statusCode int) {
+	w.statusCode = statusCode
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (w *loggingResponseWriter) Write(body []byte) (int, error) {
+	i, err := w.ResponseWriter.Write(body)
+	if err != nil {
+		w.err = err
+	}
+	return i, err
 }

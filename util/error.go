@@ -10,4 +10,6 @@ const (
 	ErrReadFile       = "Read file fail"
 	ErrReadDirToJson  = "Read dir to json fail"
 	ErrParseJson      = "Parse json fail"
+
+	ErrInvalidRequest = "Invalid request"
 )

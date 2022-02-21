@@ -30,8 +30,8 @@ func (s *Svc) Connect(w http.ResponseWriter, r *http.Request) {
 
 	editions := "[\"" + strings.Join(pe, `","`) + "\"]"
 
-	body := fmt.Sprintf(`{"backendUrl":"%s","name":"%s","editions":%s`, s.backendUrl(), ServerName, editions)
-	s.logRespErr(util.DoResponseJsonString(body, w), r)
+	body := fmt.Sprintf(`{"backendUrl":"%s","name":"%s","editions":%s}`, s.backendUrl(), ServerName, editions)
+	util.DoResponseJsonString(body, w)
 }
 
 func (s *Svc) Login(resp http.ResponseWriter, req *http.Request) {

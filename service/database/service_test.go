@@ -1,21 +1,20 @@
 package database
 
 import (
-	"github.com/donkeywon/gtil/logger"
-	"github.com/stretchr/testify/assert"
+	"fmt"
+	"os"
 	"testing"
 )
 
 func TestSvc_Open(t *testing.T) {
-	l, _ := logger.DefaultConsole()
-	config := NewConfig()
-	config.Path = "/Users/donkeywon/code/go/eft-spg/assets/database"
+	bs := make([]byte, 100)
 
-	svc := New(config)
-	svc.WithLogger(svc, l)
-	err := svc.Open()
-	assert.NoError(t, err)
-	GetProfileEditions()
+	f, _ := os.Open("/Users/donkeywon/code/go/eft-spg/assets/database/globals.json")
+
+	i, err := f.Read(bs)
+	fmt.Println(i)
+	fmt.Println(err)
+	fmt.Println(string(bs))
 }
 
 //func TestSvc_Open(t *testing.T) {
