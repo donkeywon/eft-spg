@@ -7,7 +7,7 @@ import (
 
 func (s *Svc) registerCustomizationRouter() {
 	s.RegisterRouter("/client/trading/customization/storage", s.GetSuits, true)
-	s.RegisterRouter("/client/trading/customization/{traderID}/{aaa}", s.GetTraderSuits, true)
+	s.RegisterRouter("/client/trading/customization/", s.GetTraderSuits, false)
 }
 
 func (s *Svc) GetSuits(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {

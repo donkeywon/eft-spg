@@ -26,10 +26,11 @@ type Svc struct {
 }
 
 func New(config *Config) *Svc {
-	return &Svc{
+	svc = &Svc{
 		BaseService: service.NewBase(),
 		Config:      config,
 	}
+	return svc
 }
 
 func (s *Svc) Name() string {
@@ -37,7 +38,6 @@ func (s *Svc) Name() string {
 }
 
 func (s *Svc) Open() error {
-	svc = s
 	c, err := util.ReadConfigBox()
 	if err != nil {
 		return err

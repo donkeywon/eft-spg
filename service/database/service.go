@@ -31,10 +31,11 @@ type Svc struct {
 }
 
 func New(config *Config) *Svc {
-	return &Svc{
+	svc = &Svc{
 		BaseService: service.NewBase(),
 		Config:      config,
 	}
+	return svc
 }
 
 func (s *Svc) Name() string {
@@ -44,8 +45,6 @@ func (s *Svc) Name() string {
 func (s *Svc) Open() error {
 	s.Info("Opening")
 	defer s.Info("Opened")
-
-	svc = s
 
 	bs := make([]byte, 500000000, 500000000)
 	n, err := readDirToJson(bs, s.Config.Path)

@@ -1,6 +1,8 @@
 package eft
 
-import "github.com/donkeywon/gtil/service"
+import (
+	"github.com/donkeywon/gtil/service"
+)
 
 const (
 	Name = "eft"
@@ -19,12 +21,19 @@ type Svc struct {
 	config *Config
 }
 
+func New(config *Config) *Svc {
+	svc = &Svc{
+		BaseService: service.NewBase(),
+		config:      config,
+	}
+	return svc
+}
+
 func (s *Svc) Name() string {
 	return Name
 }
 
 func (s *Svc) Open() error {
-	svc = s
 	return nil
 }
 

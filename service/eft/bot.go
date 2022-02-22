@@ -8,7 +8,7 @@ import (
 
 func (s *Svc) GetBotLimit(typ string) (int64, error) {
 	if typ == "" {
-		return 0, errors.Errorf(util.ErrIllegalArg, typ)
+		return 0, errors.New(util.ErrIllegalArg)
 	}
 
 	if typ == "cursedAssault" || typ == "assaultGroup" {

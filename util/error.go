@@ -15,10 +15,12 @@ const (
 	ErrHandleReq      = "Handle req fail"
 	ErrSendResponse   = "Send response fail"
 	ErrReadBody       = "Read body fail"
-	ErrIllegalArg     = "Illegal argument, args: %+v"
+	ErrIllegalArg     = "Illegal argument"
 	ErrUserNotExist   = "User not exist"
 	ErrUserExist      = "User exist"
 
-	ErrInvalidRequest = "Invalid request"
-	ErrLoginFail      = "Login fail"
+	ErrInvalidRequest    = "Invalid request"
+	ErrLoginFail         = "Login fail"
+	ErrRegisterFail      = "Register fail"
+	ErrDatabaseFileCrash = "Database file crash"
 )

@@ -10,7 +10,7 @@ import (
 
 func (s *Svc) registerBotRouter() {
 	s.RegisterRouter("/singleplayer/settings/bot/limit/", s.GetBotLimit, false)
-	s.RegisterRouter("/singleplayer/settings/bot/difficulty/{type}/{difficulty}", s.GetBotDifficulty, false)
+	s.RegisterRouter("/singleplayer/settings/bot/difficulty/", s.GetBotDifficulty, false)
 	s.RegisterRouter("/client/game/bot/generate", s.GenerateBots, true)
 	s.RegisterRouter("/singleplayer/settings/bot/maxCap", s.GetBotCap, false)
 }

@@ -6,9 +6,9 @@ import (
 )
 
 func (s *Svc) registerTraderRouter() {
-	s.RegisterRouter("/client/trading/api/getUserAssortPrice/trader/{traderID}", s.GetProfilePurchases, false)
-	s.RegisterRouter("/client/trading/api/getTrader/{traderID}", s.GetTrader, false)
-	s.RegisterRouter("/client/trading/api/getTraderAssort/{traderID}", s.GetAssort, false)
+	s.RegisterRouter("/client/trading/api/getUserAssortPrice/trader/", s.GetProfilePurchases, false)
+	s.RegisterRouter("/client/trading/api/getTrader/", s.GetTrader, false)
+	s.RegisterRouter("/client/trading/api/getTraderAssort/", s.GetAssort, false)
 }
 
 func (s *Svc) GetProfilePurchases(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {

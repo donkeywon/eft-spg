@@ -11,6 +11,7 @@ func (s *Svc) registerNotifierRouter() {
 	s.RegisterRouter("/?last_id", s.Notify, false)
 	s.RegisterRouter("/notifierServer", s.Notify, false)
 	s.RegisterRouter("/push/notifier/get/", s.GetNotifier, false)
+	s.RegisterRouter("/push/notifier/getwebsocket/", s.GetNotifier, false)
 }
 
 func (s *Svc) CreateNotifierChannel(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {

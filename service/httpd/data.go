@@ -17,8 +17,8 @@ func (s *Svc) registerDataRouter() {
 	s.RegisterRouter("/client/hideout/areas", s.GetHideoutAreas, true)
 	s.RegisterRouter("/client/hideout/production/scavcase/recipes", s.GetHideoutScavcase, true)
 	s.RegisterRouter("/client/languages", s.GetLocalesLanguages, true)
-	s.RegisterRouter("/client/menu/locale/{locale}", s.GetLocalesMenu, true)
-	s.RegisterRouter("/client/locale/{locale}", s.GetLocalesGlobal, true)
+	s.RegisterRouter("/client/menu/locale/{locale}", s.GetLocalesMenu, false)
+	s.RegisterRouter("/client/locale/", s.GetLocalesGlobal, false)
 }
 
 func (s *Svc) GetSettings(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {

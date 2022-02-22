@@ -7,7 +7,6 @@ require (
 	github.com/donkeywon/gtil v0.1.9
 	github.com/gobuffalo/packd v1.0.1
 	github.com/gobuffalo/packr/v2 v2.8.3
-	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.8.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.0

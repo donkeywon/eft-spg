@@ -24,7 +24,12 @@ const (
 
 var (
 	Methods = []string{"GET", "POST", "PUT"}
+	svc     *Svc
 )
+
+func GetSvc() *Svc {
+	return svc
+}
 
 type ServiceProvider func(string, *ast.Node, *http.Request) (interface{}, error)
 
@@ -44,7 +49,7 @@ type Svc struct {
 }
 
 func New(config *httpd.Config) *Svc {
-	s := &Svc{
+	svc = &Svc{
 		BaseService:    service.NewBase(),
 		httpd:          httpd.New(config),
 		Config:         config,
@@ -53,10 +58,10 @@ func New(config *httpd.Config) *Svc {
 		middleWares:    []mux.MiddlewareFunc{},
 	}
 
-	s.registerRouter()
-	s.registerMiddleware()
+	svc.registerRouter()
+	svc.registerMiddleware()
 
-	return s
+	return svc
 }
 
 func (s *Svc) Name() string {
@@ -168,7 +173,7 @@ func (s *Svc) handleReq(w http.ResponseWriter, r *http.Request) error {
 
 	resp, err := sp.Handle(sessID, &n, r)
 	if err != nil {
-		return errors.Wrap(err, util.ErrHandleReq)
+		s.Error("Handle req fail", zap.Error(err))
 	}
 
 	err = s.sendResponse(resp, w)

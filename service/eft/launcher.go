@@ -1,6 +1,7 @@
 package eft
 
 import (
+	"eft-spg/service/database"
 	"eft-spg/service/profile"
 	"eft-spg/util"
 	"fmt"
@@ -10,14 +11,6 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
 )
-
-type userInfo struct {
-	ID       string `json:"id"`
-	UserName string `json:"username"`
-	Password string `json:"password"`
-	Wipe     bool   `json:"wipe"`
-	Edition  string `json:"edition"`
-}
 
 func (s *Svc) Login(username string) (string, error) {
 	sessID, _ := profile.GetSvc().GetSessProfileByUsername(username)
@@ -36,6 +29,22 @@ func (s *Svc) Register(info *ast.Node) (string, error) {
 
 	if multierr.Combine(err, err1, err2) != nil {
 		return "", errors.Wrap(err, util.ErrIllegalArg)
+	}
+
+	editions, err := database.GetSvc().GetProfileEditions()
+	if err != nil {
+		return "", errors.Wrapf(err, util.ErrDatabaseFileCrash)
+	}
+
+	editionExist := false
+	for _, e := range editions {
+		if e == edition {
+			editionExist = true
+			break
+		}
+	}
+	if !editionExist {
+		return "", errors.New(util.ErrIllegalArg)
 	}
 
 	sessID, _ := profile.GetSvc().GetSessProfileByUsername(username)
@@ -62,4 +71,6 @@ func (s *Svc) createAccount(username string, password string, edition string) {
 	p, _ := sonic.Get(util2.String2Bytes(info))
 
 	profile.GetSvc().SetProfile(sessID, &p)
+	profile.GetSvc().LoadProfile(sessID)
+	profile.GetSvc().SaveProfile(sessID)
 }

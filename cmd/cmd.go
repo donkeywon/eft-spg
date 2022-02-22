@@ -3,6 +3,7 @@ package cmd
 import (
 	"eft-spg/service/cfg"
 	"eft-spg/service/database"
+	"eft-spg/service/eft"
 	"eft-spg/service/httpd"
 	"eft-spg/service/profile"
 	"github.com/donkeywon/gtil/service"
@@ -26,11 +27,13 @@ func New(config *Config) *Command {
 	databaseSvc := database.New(config.Database)
 	cfgSvc := cfg.New(config.Cfg)
 	httpdSvc := httpd.New(config.Httpd)
+	eftSvc := eft.New(config.EFT)
 	profileSvc := profile.New(config.Profile)
 
 	c.AppendService(database.Name, databaseSvc)
 	c.AppendService(cfg.Name, cfgSvc)
 	c.AppendService(httpd.Name, httpdSvc)
+	c.AppendService(eft.Name, eftSvc)
 	c.AppendService(profile.Name, profileSvc)
 
 	return c

@@ -6,7 +6,7 @@ import (
 )
 
 func (s *Svc) registerMatchRouter() {
-	s.RegisterRouter("/raid/profile/list", s.GetProfile, true)
+	s.RegisterRouter("/raid/profile/list", s.ListRaidProfile, true)
 	s.RegisterRouter("/client/match/available", s.ServerAvailable, true)
 	s.RegisterRouter("/client/match/updatePing", s.UpdatePing, true)
 	s.RegisterRouter("/client/match/join", s.JoinMatch, true)
@@ -27,7 +27,7 @@ func (s *Svc) registerMatchRouter() {
 	s.RegisterRouter("/client/getMetricsConfig", s.GetMetrics, true)
 }
 
-func (s *Svc) GetProfile(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) ListRaidProfile(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 
 }

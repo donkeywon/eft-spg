@@ -1,6 +1,7 @@
 package profile
 
 import (
+	"eft-spg/service/profile/hook"
 	"eft-spg/util"
 	"github.com/bytedance/sonic"
 	"github.com/bytedance/sonic/ast"
@@ -34,11 +35,13 @@ type Svc struct {
 }
 
 func New(config *Config) *Svc {
-	return &Svc{
+	svc = &Svc{
 		BaseService: service.NewBase(),
 		Config:      config,
 		profiles:    make(map[string]*ast.Node),
 	}
+
+	return svc
 }
 
 func (s *Svc) Name() string {
@@ -46,7 +49,6 @@ func (s *Svc) Name() string {
 }
 
 func (s *Svc) Open() error {
-	svc = s
 
 	if !util.DirExist(s.Config.Path) {
 		err := os.MkdirAll(s.Config.Path, os.ModePerm)
@@ -108,7 +110,7 @@ func (s *Svc) LoadProfile(sessID string) error {
 		s.SetProfile(sessID, &v)
 	}
 
-	// TODO ?
+	hook.PostLoadHook(s.GetProfile(sessID))
 
 	return err
 }
@@ -178,7 +180,7 @@ func (s *Svc) GetProfileItemByPath(sesssID string, paths ...interface{}) *ast.No
 	}
 
 	n := p.GetByPath(paths)
-	if n.Check() != nil {
+	if !n.Exists() {
 		return nil
 	}
 
@@ -203,7 +205,7 @@ func (s *Svc) SetScavProfile(sessID string, sp *ast.Node) error {
 		return nil
 	}
 
-	if p.Get("characters").Check() != nil {
+	if !p.Get("characters").Exists() {
 		_, err := p.Set("characters", util.GetEmptyJsonNode())
 		if err != nil {
 			return errors.Wrapf(err, util.ErrSetScavProfile, sessID)
@@ -255,7 +257,7 @@ func (s *Svc) IsWipe(sessID string) bool {
 	}
 
 	n := p.Get("info")
-	if n.Check() != nil {
+	if !n.Exists() {
 		return false
 	}
 
