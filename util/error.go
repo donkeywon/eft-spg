@@ -23,4 +23,5 @@ const (
 	ErrLoginFail         = "Login fail"
 	ErrRegisterFail      = "Register fail"
 	ErrDatabaseFileCrash = "Database file crash"
+	ErrChangeUsername    = "Change username fail"
 )

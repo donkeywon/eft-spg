@@ -74,3 +74,13 @@ func (s *Svc) createAccount(username string, password string, edition string) {
 	profile.GetSvc().LoadProfile(sessID)
 	profile.GetSvc().SaveProfile(sessID)
 }
+
+func (s *Svc) ChangeUsername(old string, new string) error {
+	_, p := profile.GetSvc().GetSessProfileByUsername(old)
+	if p == nil {
+		return errors.New(util.ErrUserNotExist)
+	}
+
+	p.Get("info").SetAny("username", new)
+	return nil
+}

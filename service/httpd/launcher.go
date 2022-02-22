@@ -77,8 +77,21 @@ func (s *Svc) GetProfile(sessID string, body *ast.Node, r *http.Request) (interf
 }
 
 func (s *Svc) ChangeUsername(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
+	old, err := body.Get("username").String()
+	if err != nil {
+		return "FAILED", errors.New(util2.ErrIllegalArg)
+	}
+	newUn, err := body.Get("change").String()
+	if err != nil {
+		return "FAILED", errors.New(util2.ErrIllegalArg)
+	}
 
+	err = eft.GetSvc().ChangeUsername(old, newUn)
+	if err != nil {
+		return "FAILED", errors.Wrap(err, util2.ErrChangeUsername)
+	}
+
+	return "OK", nil
 }
 
 func (s *Svc) ChangePassword(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
