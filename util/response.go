@@ -157,7 +157,7 @@ func DoResponseJsonString(data string, w http.ResponseWriter) error {
 func DoResponseJsonBytes(data []byte, w http.ResponseWriter) error {
 	w.Header().Set(HeaderKeyContentType, ContentTypeJson)
 
-	return DoResponseDirect(data, http.StatusOK, w)
+	return DoResponseBytes(data, http.StatusOK, w)
 }
 
 func DoResponseZlibJson(data interface{}, w http.ResponseWriter) error {
@@ -181,8 +181,12 @@ func DoResponseZlibJson(data interface{}, w http.ResponseWriter) error {
 	return DoResponseJsonBytes(out.Bytes(), w)
 }
 
-func DoResponseDirect(data []byte, httpCode int, w http.ResponseWriter) error {
+func DoResponseBytes(data []byte, httpCode int, w http.ResponseWriter) error {
 	w.WriteHeader(httpCode)
 	w.Write(data)
 	return nil
+}
+
+func DoResponseString(data string, httpCode int, w http.ResponseWriter) error {
+	return DoResponseBytes(util.String2Bytes(data), httpCode, w)
 }

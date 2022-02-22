@@ -2,6 +2,7 @@ package httpd
 
 import (
 	"eft-spg/service/database"
+	"eft-spg/service/eft"
 	"eft-spg/util"
 	"fmt"
 	"go.uber.org/zap"
@@ -35,13 +36,20 @@ func (s *Svc) Connect(w http.ResponseWriter, r *http.Request) {
 	util.DoResponseJsonString(body, w)
 }
 
-func (s *Svc) Login(resp http.ResponseWriter, req *http.Request) {
-	bs, err := ioutil.ReadAll(req.Body)
+func (s *Svc) Login(w http.ResponseWriter, r *http.Request) {
+	sessID := "FAILED"
+	bs, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		s.Error("Login fail", zap.Error(err))
-		return
+		s.Error("User login fail", zap.Error(err))
 	}
 
+	sessID, err = eft.GetSvc().Login(bs)
+	if err != nil {
+		s.Error("User login fail", zap.Error(err))
+		sessID = "FAILED"
+	}
+
+	util.DoResponseString(sessID, http.StatusOK, w)
 }
 
 func (s *Svc) Register(resp http.ResponseWriter, req *http.Request) {
