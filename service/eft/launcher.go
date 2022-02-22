@@ -31,19 +31,8 @@ func (s *Svc) Register(info *ast.Node) (string, error) {
 		return "", errors.Wrap(err, util.ErrIllegalArg)
 	}
 
-	editions, err := database.GetSvc().GetProfileEditions()
-	if err != nil {
-		return "", errors.Wrapf(err, util.ErrDatabaseFileCrash)
-	}
-
-	editionExist := false
-	for _, e := range editions {
-		if e == edition {
-			editionExist = true
-			break
-		}
-	}
-	if !editionExist {
+	et := database.GetSvc().GetProfileEditionsTemplate()
+	if !et.Get(edition).Exists() {
 		return "", errors.New(util.ErrIllegalArg)
 	}
 
@@ -81,6 +70,32 @@ func (s *Svc) ChangeUsername(old string, new string) error {
 		return errors.New(util.ErrUserNotExist)
 	}
 
-	p.Get("info").SetAny("username", new)
+	p.Get("info").Set("username", ast.NewString(new))
+	return nil
+}
+
+func (s *Svc) ChangePassword(username string, new string) error {
+	_, p := profile.GetSvc().GetSessProfileByUsername(username)
+	if p == nil {
+		return errors.New(util.ErrUserNotExist)
+	}
+
+	p.Get("info").Set("password", ast.NewString(new))
+	return nil
+}
+
+func (s *Svc) Wipe(username string, edition string) error {
+	_, p := profile.GetSvc().GetSessProfileByUsername(username)
+	if p == nil {
+		return errors.New(util.ErrUserNotExist)
+	}
+
+	et := database.GetSvc().GetProfileEditionsTemplate()
+	if !et.Get(edition).Exists() {
+		return errors.New(util.ErrIllegalArg)
+	}
+
+	p.Get("info").Set("edition", ast.NewString(edition))
+	p.Get("info").Set("wipe", ast.NewBool(true))
 	return nil
 }

@@ -147,8 +147,12 @@ func (s *Svc) GetDatabase() *ast.Node {
 	return s.database
 }
 
+func (s *Svc) GetProfileEditionsTemplate() *ast.Node {
+	return s.database.GetByPath("templates", "profiles")
+}
+
 func (s *Svc) GetProfileEditions() ([]string, error) {
-	ps := s.database.GetByPath("templates", "profiles")
+	ps := s.GetProfileEditionsTemplate()
 
 	editions := make([]string, 0, 4)
 	err := ps.ForEach(func(path ast.Sequence, node *ast.Node) bool {

@@ -95,13 +95,39 @@ func (s *Svc) ChangeUsername(sessID string, body *ast.Node, r *http.Request) (in
 }
 
 func (s *Svc) ChangePassword(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
+	newPw, err := body.Get("change").String()
+	if err != nil {
+		return "FAILED", errors.New(util2.ErrIllegalArg)
+	}
+	username, err := body.Get("username").String()
+	if err != nil {
+		return "FAILED", errors.New(util2.ErrIllegalArg)
+	}
 
+	err = eft.GetSvc().ChangePassword(username, newPw)
+	if err != nil {
+		return "FAILED", errors.Wrap(err, util2.ErrChangeUsername)
+	}
+
+	return "OK", nil
 }
 
 func (s *Svc) Wipe(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
+	username, err := body.Get("username").String()
+	if err != nil {
+		return "FAILED", errors.New(util2.ErrIllegalArg)
+	}
+	edition, err := body.Get("edition").String()
+	if err != nil {
+		return "FAILED", errors.New(util2.ErrIllegalArg)
+	}
 
+	err = eft.GetSvc().Wipe(username, edition)
+	if err != nil {
+		return "FAILED", err
+	}
+
+	return "OK", nil
 }
 
 func (s *Svc) GetMiniProfile(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
