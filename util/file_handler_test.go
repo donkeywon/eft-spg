@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -14,5 +15,5 @@ var jsonBs = []byte(`
 `)
 
 func TestJsonFileHandler(t *testing.T) {
-
+	fmt.Println(GenerateSessID())
 }

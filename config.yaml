@@ -1,2 +1,4 @@
 httpd:
   addr: "127.0.0.1:1408"
+profile:
+  path: "/Users/donkeywon/Downloads"

@@ -1,48 +1,57 @@
 package httpd
 
 import (
+	"github.com/bytedance/sonic/ast"
 	"net/http"
 )
 
 func (s *Svc) registerGameRouter() {
-	s.RegisterRouter("/client/game/config", s.GetGameConfig)
-	s.RegisterRouter("/client/server/list", s.ListServer)
-	s.RegisterRouter("/client/game/version/validate", s.ValidateVersion)
-	s.RegisterRouter("/client/game/start", s.StartGame)
-	s.RegisterRouter("/client/game/logout", s.LogoutGame)
-	s.RegisterRouter("/client/checkVersion", s.CheckVersion)
-	s.RegisterRouter("/client/game/keepalive", s.KeepAliveGame)
-	s.RegisterRouter("/singleplayer/settings/version", s.GetVersion)
+	s.RegisterRouter("/client/game/config", s.GetGameConfig, true)
+	s.RegisterRouter("/client/server/list", s.ListServer, true)
+	s.RegisterRouter("/client/game/version/validate", s.ValidateVersion, true)
+	s.RegisterRouter("/client/game/start", s.StartGame, true)
+	s.RegisterRouter("/client/game/logout", s.LogoutGame, true)
+	s.RegisterRouter("/client/checkVersion", s.CheckVersion, true)
+	s.RegisterRouter("/client/game/keepalive", s.KeepAliveGame, true)
+	s.RegisterRouter("/singleplayer/settings/version", s.GetVersion, true)
 }
 
-func (s *Svc) GetGameConfig(resp http.ResponseWriter, req *http.Request) {
-
-}
-
-func (s *Svc) ListServer(resp http.ResponseWriter, req *http.Request) {
+func (s *Svc) GetGameConfig(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+	return nil, nil
 
 }
 
-func (s *Svc) ValidateVersion(resp http.ResponseWriter, req *http.Request) {
+func (s *Svc) ListServer(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+	return nil, nil
 
 }
 
-func (s *Svc) StartGame(resp http.ResponseWriter, req *http.Request) {
+func (s *Svc) ValidateVersion(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+	return nil, nil
 
 }
 
-func (s *Svc) LogoutGame(resp http.ResponseWriter, req *http.Request) {
+func (s *Svc) StartGame(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+	return nil, nil
 
 }
 
-func (s *Svc) CheckVersion(resp http.ResponseWriter, req *http.Request) {
+func (s *Svc) LogoutGame(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+	return nil, nil
 
 }
 
-func (s *Svc) KeepAliveGame(resp http.ResponseWriter, req *http.Request) {
+func (s *Svc) CheckVersion(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+	return nil, nil
 
 }
 
-func (s *Svc) GetVersion(resp http.ResponseWriter, req *http.Request) {
+func (s *Svc) KeepAliveGame(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+	return nil, nil
+
+}
+
+func (s *Svc) GetVersion(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+	return nil, nil
 
 }

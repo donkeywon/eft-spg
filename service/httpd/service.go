@@ -4,12 +4,17 @@ import (
 	"compress/zlib"
 	"eft-spg/util"
 	"fmt"
+	"github.com/bytedance/sonic"
+	"github.com/bytedance/sonic/ast"
 	"github.com/donkeywon/gtil/httpd"
 	"github.com/donkeywon/gtil/service"
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"net/http"
+	"strings"
+	"time"
 )
 
 const (
@@ -21,23 +26,31 @@ var (
 	Methods = []string{"GET", "POST", "PUT"}
 )
 
+type ServiceProvider func(string, *ast.Node, *http.Request) (interface{}, error)
+
+func (sp ServiceProvider) Handle(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+	return sp(sessID, body, r)
+}
+
 type Svc struct {
 	*service.BaseService
 	httpd  *httpd.HttpD
 	Config *httpd.Config
 
-	routers map[string]func(http.ResponseWriter, *http.Request)
+	staticRouters  map[string]ServiceProvider
+	dynamicRouters map[string]ServiceProvider
 
 	middleWares []mux.MiddlewareFunc
 }
 
 func New(config *httpd.Config) *Svc {
 	s := &Svc{
-		BaseService: service.NewBase(),
-		httpd:       httpd.New(config),
-		Config:      config,
-		routers:     make(map[string]func(http.ResponseWriter, *http.Request)),
-		middleWares: []mux.MiddlewareFunc{},
+		BaseService:    service.NewBase(),
+		httpd:          httpd.New(config),
+		Config:         config,
+		staticRouters:  make(map[string]ServiceProvider),
+		dynamicRouters: make(map[string]ServiceProvider),
+		middleWares:    []mux.MiddlewareFunc{},
 	}
 
 	s.registerRouter()
@@ -73,22 +86,121 @@ func (s *Svc) RegisterMiddleware(middlewareFunc mux.MiddlewareFunc) {
 	s.middleWares = append(s.middleWares, middlewareFunc)
 }
 
-func (s *Svc) RegisterRouter(path string, f func(http.ResponseWriter, *http.Request)) {
-	s.routers[path] = f
+func (s *Svc) RegisterRouter(path string, f ServiceProvider, static bool) {
+	if static {
+		s.staticRouters[path] = f
+	} else {
+		s.dynamicRouters[path] = f
+	}
 }
 
 func (s *Svc) GetRouter() *mux.Router {
 	router := mux.NewRouter()
 
-	for path, f := range s.routers {
-		router.HandleFunc(path, s.responseLogger(http.HandlerFunc(f))).Methods(Methods...)
-	}
+	router.PathPrefix("/").HandlerFunc(s.HomeHandler)
 
 	for _, m := range s.middleWares {
 		router.Use(m)
 	}
 
 	return router
+}
+
+func (s *Svc) HomeHandler(w http.ResponseWriter, r *http.Request) {
+	start := time.Now().UnixNano()
+	defer func() {
+		end := time.Now().UnixNano()
+		s.Info("Handle req", zap.String("url", r.RequestURI), zap.String("cost", fmt.Sprintf("%.3fms", float64(end-start)/1000000)))
+	}()
+
+	err := s.preHandle(w, r)
+	if err != nil {
+		s.Error("Pre handle req fail", zap.Error(err))
+	}
+
+	err = s.handleReq(w, r)
+	if err != nil {
+		s.Error("Handle req fail", zap.Error(err))
+	}
+
+	err = s.postHandle(w, r)
+	if err != nil {
+		s.Error("Post handle req fail", zap.Error(err))
+	}
+}
+
+func (s *Svc) preHandle(w http.ResponseWriter, r *http.Request) error {
+	if strings.Index(r.RequestURI, "?retry=") > 0 {
+		r.RequestURI = strings.Split(r.RequestURI, "?retry=")[0]
+	}
+
+	return nil
+}
+
+func (s *Svc) handleReq(w http.ResponseWriter, r *http.Request) error {
+	sessID := util.GetSessionID(r)
+
+	var err error
+	buf := util.GetBuffer()
+	defer buf.Free()
+	if r.ContentLength > 0 {
+		_, err = buf.ReadFrom(r.Body)
+		if err != nil {
+			return errors.Wrap(err, util.ErrReadBody)
+		}
+	}
+
+	var n ast.Node
+
+	if buf.Len() > 0 {
+		n, err = sonic.Get(buf.Bytes())
+		if err != nil {
+			return errors.Wrap(err, util.ErrParseJson)
+		}
+	} else {
+		n = util.GetEmptyJsonNode()
+	}
+
+	sp := s.getServiceProvider(r)
+	if sp == nil {
+		return errors.New(util.ErrRouterNotFound)
+	}
+
+	resp, err := sp.Handle(sessID, &n, r)
+	if err != nil {
+		return errors.Wrap(err, util.ErrHandleReq)
+	}
+
+	err = s.sendResponse(resp, w)
+	if err != nil {
+		return errors.Wrap(err, util.ErrSendResponse)
+	}
+
+	return nil
+}
+
+func (s *Svc) postHandle(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
+func (s *Svc) getServiceProvider(r *http.Request) ServiceProvider {
+	sSP, exist := s.staticRouters[r.RequestURI]
+	if exist {
+		return sSP
+	}
+
+	for uri, dSP := range s.dynamicRouters {
+		if strings.Index(r.RequestURI, uri) == 0 {
+			return dSP
+		}
+	}
+
+	return nil
+}
+
+func (s *Svc) sendResponse(resp interface{}, w http.ResponseWriter) error {
+	//return util.DoResponseZlibJson(resp, w)
+	return util.DoResponseJson(resp, w)
 }
 
 func (s *Svc) registerRouter() {
@@ -116,8 +228,8 @@ func (s *Svc) registerRouter() {
 }
 
 func (s *Svc) registerMiddleware() {
-	s.RegisterMiddleware(s.loggingMiddleware)
-	s.RegisterMiddleware(s.authMiddleware)
+	//s.RegisterMiddleware(s.loggingMiddleware)
+	s.RegisterMiddleware(s.sessMiddleware)
 	//s.RegisterMiddleware(s.decodeMiddleware)
 }
 
@@ -158,15 +270,13 @@ func (s *Svc) decodeMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Svc) authMiddleware(next http.Handler) http.Handler {
+func (s *Svc) sessMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sessionID := util.GetSessionID(r)
-		if sessionID == "" {
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			return
+		if sessionID != "" {
+			w.Header().Set("Set-Cookie", "PHPSESSID="+sessionID)
 		}
 
-		w.Header().Set("Set-Cookie", "PHPSESSID="+sessionID)
 		next.ServeHTTP(w, r)
 	})
 }

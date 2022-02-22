@@ -46,6 +46,8 @@ func (s *Svc) Name() string {
 }
 
 func (s *Svc) Open() error {
+	svc = s
+
 	if !util.DirExist(s.Config.Path) {
 		err := os.MkdirAll(s.Config.Path, os.ModePerm)
 		if err != nil {
@@ -154,7 +156,7 @@ func (s *Svc) SaveProfile(sessID string) error {
 	return nil
 }
 
-func (s *Svc) GetSessIDByUsername(username string) (string, error) {
+func (s *Svc) GetSessProfileByUsername(username string) (string, *ast.Node) {
 	for sessID, profile := range s.profiles {
 		un, err := profile.GetByPath("info", "username").String()
 		if err != nil {
@@ -162,11 +164,11 @@ func (s *Svc) GetSessIDByUsername(username string) (string, error) {
 		}
 
 		if username == un {
-			return sessID, nil
+			return sessID, profile
 		}
 	}
 
-	return "", errors.New("User not exist")
+	return "", nil
 }
 
 func (s *Svc) GetProfileItemByPath(sesssID string, paths ...interface{}) *ast.Node {

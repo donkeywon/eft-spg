@@ -11,6 +11,14 @@ const (
 	ErrReadDirToJson  = "Read dir to json fail"
 	ErrParseJson      = "Parse json fail"
 
+	ErrRouterNotFound = "404"
+	ErrHandleReq      = "Handle req fail"
+	ErrSendResponse   = "Send response fail"
+	ErrReadBody       = "Read body fail"
+	ErrIllegalArg     = "Illegal argument, args: %+v"
+	ErrUserNotExist   = "User not exist"
+	ErrUserExist      = "User exist"
+
 	ErrInvalidRequest = "Invalid request"
 	ErrLoginFail      = "Login fail"
 )

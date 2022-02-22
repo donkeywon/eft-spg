@@ -133,12 +133,22 @@ func DoResponse(errCode int, errMsg string, data interface{}, w http.ResponseWri
 }
 
 func DoResponseJson(data interface{}, w http.ResponseWriter) error {
-	enc, err := json.Marshal(data)
-	if err != nil {
-		return err
+	var err error
+	var bs []byte
+
+	switch data.(type) {
+	case []byte:
+		bs = data.([]byte)
+	case string:
+		bs = util.String2Bytes(data.(string))
+	default:
+		bs, err = sonic.Marshal(data)
+		if err != nil {
+			return err
+		}
 	}
 
-	return DoResponseJsonBytes(enc, w)
+	return DoResponseJsonBytes(bs, w)
 }
 
 func DoResponseJsonValue(v *ast.Node, w http.ResponseWriter) error {
@@ -183,8 +193,8 @@ func DoResponseZlibJson(data interface{}, w http.ResponseWriter) error {
 
 func DoResponseBytes(data []byte, httpCode int, w http.ResponseWriter) error {
 	w.WriteHeader(httpCode)
-	w.Write(data)
-	return nil
+	_, err := w.Write(data)
+	return err
 }
 
 func DoResponseString(data string, httpCode int, w http.ResponseWriter) error {
