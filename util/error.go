@@ -12,4 +12,5 @@ const (
 	ErrParseJson      = "Parse json fail"
 
 	ErrInvalidRequest = "Invalid request"
+	ErrLoginFail      = "Login fail"
 )

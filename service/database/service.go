@@ -17,12 +17,17 @@ const (
 )
 
 var (
-	database *ast.Node
+	svc *Svc
 )
+
+func GetSvc() *Svc {
+	return svc
+}
 
 type Svc struct {
 	*service.BaseService
-	Config *Config
+	Config   *Config
+	database *ast.Node
 }
 
 func New(config *Config) *Svc {
@@ -40,6 +45,8 @@ func (s *Svc) Open() error {
 	s.Info("Opening")
 	defer s.Info("Opened")
 
+	svc = s
+
 	bs := make([]byte, 500000000, 500000000)
 	n, err := readDirToJson(bs, s.Config.Path)
 	if err != nil {
@@ -52,7 +59,7 @@ func (s *Svc) Open() error {
 	}
 	bs = nil
 
-	database = &node
+	s.database = &node
 
 	return err
 }
@@ -137,12 +144,12 @@ func readDirToJson(bs []byte, path string) (int, error) {
 	return offset, nil
 }
 
-func GetDatabase() *ast.Node {
-	return database
+func (s *Svc) GetDatabase() *ast.Node {
+	return s.database
 }
 
-func GetProfileEditions() ([]string, error) {
-	ps := database.GetByPath("templates", "profiles")
+func (s *Svc) GetProfileEditions() ([]string, error) {
+	ps := s.database.GetByPath("templates", "profiles")
 
 	editions := make([]string, 0, 4)
 	err := ps.ForEach(func(path ast.Sequence, node *ast.Node) bool {

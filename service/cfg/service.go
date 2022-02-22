@@ -12,12 +12,17 @@ const (
 )
 
 var (
-	cfg *ast.Node
+	svc *Svc
 )
+
+func GetSvc() *Svc {
+	return svc
+}
 
 type Svc struct {
 	*service.BaseService
 	Config *Config
+	cfg    *ast.Node
 }
 
 func New(config *Config) *Svc {
@@ -32,6 +37,7 @@ func (s *Svc) Name() string {
 }
 
 func (s *Svc) Open() error {
+	svc = s
 	c, err := util.ReadConfigBox()
 	if err != nil {
 		return err
@@ -41,7 +47,7 @@ func (s *Svc) Open() error {
 		return err
 	}
 
-	cfg = c
+	s.cfg = c
 
 	return nil
 }
@@ -54,6 +60,6 @@ func (s *Svc) Shutdown() error {
 	return nil
 }
 
-func GetConfig() *ast.Node {
-	return cfg
+func (s *Svc) GetConfig() *ast.Node {
+	return s.cfg
 }

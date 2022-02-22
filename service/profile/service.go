@@ -19,19 +19,25 @@ const (
 )
 
 var (
-	profiles = make(map[string]*ast.Node)
-	path     = "user/profiles"
+	svc *Svc
 )
+
+func GetSvc() *Svc {
+	return svc
+}
 
 type Svc struct {
 	*service.BaseService
 	Config *Config
+
+	profiles map[string]*ast.Node
 }
 
 func New(config *Config) *Svc {
 	return &Svc{
 		BaseService: service.NewBase(),
 		Config:      config,
+		profiles:    make(map[string]*ast.Node),
 	}
 }
 
@@ -47,8 +53,6 @@ func (s *Svc) Open() error {
 		}
 	}
 
-	path = s.Config.Path
-
 	err := filepath.Walk(s.Config.Path, func(path string, info fs.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
@@ -59,7 +63,7 @@ func (s *Svc) Open() error {
 			return nil
 		}
 
-		err = LoadProfile(fn)
+		err = s.LoadProfile(fn)
 		if err != nil {
 			return err
 		}
@@ -85,9 +89,9 @@ func (s *Svc) Shutdown() error {
 	return nil
 }
 
-func LoadProfile(sessID string) error {
+func (s *Svc) LoadProfile(sessID string) error {
 	var err error
-	filename := FullPath(sessID)
+	filename := s.FullPath(sessID)
 	if util.FileExist(filename) {
 		bs, err := ioutil.ReadFile(filename)
 		if err != nil {
@@ -99,7 +103,7 @@ func LoadProfile(sessID string) error {
 			return errors.Wrapf(err, util.ErrReadProfile, filename)
 		}
 
-		SetProfile(sessID, &v)
+		s.SetProfile(sessID, &v)
 	}
 
 	// TODO ?
@@ -114,44 +118,59 @@ func InitialProfile() *ast.Node {
 	return &p
 }
 
-func GetProfile(sessID string) *ast.Node {
-	return profiles[sessID]
+func (s *Svc) GetProfile(sessID string) *ast.Node {
+	return s.profiles[sessID]
 }
 
-func SetProfile(sessID string, v *ast.Node) {
-	profiles[sessID] = v
+func (s *Svc) SetProfile(sessID string, v *ast.Node) {
+	s.profiles[sessID] = v
 }
 
 // TODO go update
-func SaveProfile(sessID string) error {
-	filePath := FullPath(sessID)
+func (s *Svc) SaveProfile(sessID string) error {
+	filePath := s.FullPath(sessID)
 
-	p := GetProfile(sessID)
+	p := s.GetProfile(sessID)
 	if p == nil {
 		p = InitialProfile()
-		SetProfile(sessID, p)
+		s.SetProfile(sessID, p)
 	}
 
 	f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, ProfileFilePerm)
 	if err != nil {
-		return errors.Wrapf(err, util.ErrSaveProfile, FullProfileFileName(sessID))
+		return errors.Wrapf(err, util.ErrSaveProfile, s.FullProfileFileName(sessID))
 	}
 
 	bs, err := p.MarshalJSON()
 	if err != nil {
-		return errors.Wrapf(err, util.ErrSaveProfile, FullProfileFileName(sessID))
+		return errors.Wrapf(err, util.ErrSaveProfile, s.FullProfileFileName(sessID))
 	}
 
 	_, err = f.Write(bs)
 	if err != nil {
-		return errors.Wrapf(err, util.ErrSaveProfile, FullProfileFileName(sessID))
+		return errors.Wrapf(err, util.ErrSaveProfile, s.FullProfileFileName(sessID))
 	}
 
 	return nil
 }
 
-func GetProfileItemByPath(sesssID string, paths ...interface{}) *ast.Node {
-	p := GetProfile(sesssID)
+func (s *Svc) GetSessIDByUsername(username string) (string, error) {
+	for sessID, profile := range s.profiles {
+		un, err := profile.GetByPath("info", "username").String()
+		if err != nil {
+			continue
+		}
+
+		if username == un {
+			return sessID, nil
+		}
+	}
+
+	return "", errors.New("User not exist")
+}
+
+func (s *Svc) GetProfileItemByPath(sesssID string, paths ...interface{}) *ast.Node {
+	p := s.GetProfile(sesssID)
 	if p == nil {
 		return nil
 	}
@@ -164,20 +183,20 @@ func GetProfileItemByPath(sesssID string, paths ...interface{}) *ast.Node {
 	return n
 }
 
-func GetCharacterProfile(sessID string, typ string) *ast.Node {
-	return GetProfileItemByPath(sessID, "characters", typ)
+func (s *Svc) GetCharacterProfile(sessID string, typ string) *ast.Node {
+	return s.GetProfileItemByPath(sessID, "characters", typ)
 }
 
-func GetPMCProfile(sessID string) *ast.Node {
-	return GetCharacterProfile(sessID, "pmc")
+func (s *Svc) GetPMCProfile(sessID string) *ast.Node {
+	return s.GetCharacterProfile(sessID, "pmc")
 }
 
-func GetScavProfile(sessID string) *ast.Node {
-	return GetCharacterProfile(sessID, "scav")
+func (s *Svc) GetScavProfile(sessID string) *ast.Node {
+	return s.GetCharacterProfile(sessID, "scav")
 }
 
-func SetScavProfile(sessID string, sp *ast.Node) error {
-	p := GetProfile(sessID)
+func (s *Svc) SetScavProfile(sessID string, sp *ast.Node) error {
+	p := s.GetProfile(sessID)
 	if p == nil {
 		return nil
 	}
@@ -197,21 +216,21 @@ func SetScavProfile(sessID string, sp *ast.Node) error {
 	return nil
 }
 
-func GetCompleteProfile(sessID string) *ast.Node {
+func (s *Svc) GetCompleteProfile(sessID string) *ast.Node {
 	v := util.GetEmptyJsonArray()
 
-	if !IsWipe(sessID) {
+	if !s.IsWipe(sessID) {
 		return &v
 	}
 
 	i := 0
-	pmcProfile := GetPMCProfile(sessID)
+	pmcProfile := s.GetPMCProfile(sessID)
 	if pmcProfile != nil {
 		v.SetByIndex(i, *pmcProfile)
 		i++
 	}
 
-	scavProfile := GetScavProfile(sessID)
+	scavProfile := s.GetScavProfile(sessID)
 	if scavProfile != nil {
 		v.SetByIndex(i, *scavProfile)
 	}
@@ -219,16 +238,16 @@ func GetCompleteProfile(sessID string) *ast.Node {
 	return &v
 }
 
-func GetProfileInfo(sessID string) *ast.Node {
-	return GetProfileItemByPath(sessID, "info")
+func (s *Svc) GetProfileInfo(sessID string) *ast.Node {
+	return s.GetProfileItemByPath(sessID, "info")
 }
 
-func CreateProfile() {
+func (s *Svc) CreateProfile() {
 	// TODO
 }
 
-func IsWipe(sessID string) bool {
-	p := GetProfile(sessID)
+func (s *Svc) IsWipe(sessID string) bool {
+	p := s.GetProfile(sessID)
 	if p == nil {
 		return false
 	}
@@ -246,10 +265,10 @@ func IsWipe(sessID string) bool {
 	return w
 }
 
-func FullPath(sessID string) string {
-	return filepath.Join(path, FullProfileFileName(sessID))
+func (s *Svc) FullPath(sessID string) string {
+	return filepath.Join(s.Config.Path, s.FullProfileFileName(sessID))
 }
 
-func FullProfileFileName(sessID string) string {
+func (s *Svc) FullProfileFileName(sessID string) string {
 	return sessID + "." + ProfileFileExt
 }

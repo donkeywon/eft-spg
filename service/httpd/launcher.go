@@ -5,6 +5,7 @@ import (
 	"eft-spg/util"
 	"fmt"
 	"go.uber.org/zap"
+	"io/ioutil"
 	"net/http"
 	"strings"
 )
@@ -22,9 +23,9 @@ func (s *Svc) registerLauncherRouter() {
 }
 
 func (s *Svc) Connect(w http.ResponseWriter, r *http.Request) {
-	pe, err := database.GetProfileEditions()
+	pe, err := database.GetSvc().GetProfileEditions()
 	if err != nil {
-		s.Error("Get profile editions fail", zap.Error(err))
+		s.Error("Connect fail", zap.Error(err))
 		return
 	}
 
@@ -35,6 +36,11 @@ func (s *Svc) Connect(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Svc) Login(resp http.ResponseWriter, req *http.Request) {
+	bs, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		s.Error("Login fail", zap.Error(err))
+		return
+	}
 
 }
 

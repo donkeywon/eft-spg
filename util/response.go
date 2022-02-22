@@ -183,6 +183,6 @@ func DoResponseZlibJson(data interface{}, w http.ResponseWriter) error {
 
 func DoResponseDirect(data []byte, httpCode int, w http.ResponseWriter) error {
 	w.WriteHeader(httpCode)
-	_, err := w.Write(data)
-	return err
+	w.Write(data)
+	return nil
 }

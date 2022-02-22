@@ -18,7 +18,7 @@ func (s *Svc) registerBotRouter() {
 func (s *Svc) GetBotLimit(resp http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 
-	b, err := eft.GetBotLimit(vars["type"])
+	b, err := eft.GetSvc().GetBotLimit(vars["type"])
 	if err != nil {
 		s.Error("GetBotLimit fail", zap.Error(err))
 		return
