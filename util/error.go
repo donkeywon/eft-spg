@@ -1,11 +1,12 @@
 package util
 
 const (
-	ErrReadFileBox    = "Read file box fail, filePath: %s"
-	ErrMkdirFail      = "Mkdir fail, path: %s"
-	ErrReadProfile    = "Read profile fail, file: %s"
-	ErrSaveProfile    = "Save profile fail, file: %s"
-	ErrSetScavProfile = "Set scav profile fail, sessID: %s"
+	ErrReadFileBox    = "Read file box fail"
+	ErrMkdirFail      = "Mkdir fail"
+	ErrReadProfile    = "Read profile fail"
+	ErrSaveProfile    = "Save profile fail"
+	ErrSetScavProfile = "Set scav profile fail"
+	ErrProfileCrash   = "Profile crash"
 	ErrOpenFile       = "Open file fail"
 	ErrReadFile       = "Read file fail"
 	ErrReadDirToJson  = "Read dir to json fail"

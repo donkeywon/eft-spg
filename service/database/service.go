@@ -162,3 +162,12 @@ func (s *Svc) GetProfileEditions() ([]string, error) {
 
 	return editions, err
 }
+
+func (s *Svc) GetMaxLevel() (int, error) {
+	expTable, err := s.database.GetByPath("globals", "config", "exp", "level", "exp_table").Array()
+	if err != nil {
+		return 0, errors.Wrap(err, "Get max level fail")
+	}
+
+	return len(expTable) - 1, nil
+}

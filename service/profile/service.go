@@ -1,8 +1,11 @@
 package profile
 
 import (
+	"eft-spg/service/database"
+	"eft-spg/service/httpd"
 	"eft-spg/service/profile/hook"
 	"eft-spg/util"
+	"fmt"
 	"github.com/bytedance/sonic"
 	"github.com/bytedance/sonic/ast"
 	"github.com/donkeywon/gtil/service"
@@ -53,7 +56,7 @@ func (s *Svc) Open() error {
 	if !util.DirExist(s.Config.Path) {
 		err := os.MkdirAll(s.Config.Path, os.ModePerm)
 		if err != nil {
-			return errors.Wrapf(err, util.ErrMkdirFail, s.Config.Path)
+			return errors.Wrap(err, util.ErrMkdirFail)
 		}
 	}
 
@@ -99,12 +102,12 @@ func (s *Svc) LoadProfile(sessID string) error {
 	if util.FileExist(filename) {
 		bs, err := ioutil.ReadFile(filename)
 		if err != nil {
-			return errors.Wrapf(err, util.ErrReadProfile, filename)
+			return errors.Wrap(err, util.ErrReadProfile)
 		}
 
 		v, err := sonic.Get(bs)
 		if err != nil {
-			return errors.Wrapf(err, util.ErrReadProfile, filename)
+			return errors.Wrap(err, util.ErrReadProfile)
 		}
 
 		s.SetProfile(sessID, &v)
@@ -142,17 +145,17 @@ func (s *Svc) SaveProfile(sessID string) error {
 
 	f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, ProfileFilePerm)
 	if err != nil {
-		return errors.Wrapf(err, util.ErrSaveProfile, s.FullProfileFileName(sessID))
+		return errors.Wrap(err, util.ErrSaveProfile)
 	}
 
 	bs, err := p.MarshalJSON()
 	if err != nil {
-		return errors.Wrapf(err, util.ErrSaveProfile, s.FullProfileFileName(sessID))
+		return errors.Wrap(err, util.ErrSaveProfile)
 	}
 
 	_, err = f.Write(bs)
 	if err != nil {
-		return errors.Wrapf(err, util.ErrSaveProfile, s.FullProfileFileName(sessID))
+		return errors.Wrap(err, util.ErrSaveProfile)
 	}
 
 	return nil
@@ -208,13 +211,13 @@ func (s *Svc) SetScavProfile(sessID string, sp *ast.Node) error {
 	if !p.Get("characters").Exists() {
 		_, err := p.Set("characters", util.GetEmptyJsonNode())
 		if err != nil {
-			return errors.Wrapf(err, util.ErrSetScavProfile, sessID)
+			return errors.Wrap(err, util.ErrSetScavProfile)
 		}
 	}
 
 	_, err := p.Get("characters").Set("scav", *sp)
 	if err != nil {
-		return errors.Wrapf(err, util.ErrSetScavProfile, sessID)
+		return errors.Wrap(err, util.ErrSetScavProfile)
 	}
 
 	return nil
@@ -275,4 +278,75 @@ func (s *Svc) FullPath(sessID string) string {
 
 func (s *Svc) FullProfileFileName(sessID string) string {
 	return sessID + "." + ProfileFileExt
+}
+
+func (s *Svc) GetMiniProfile(sessID string) (*ast.Node, error) {
+	p := s.GetProfile(sessID)
+	if p == nil {
+		return nil, errors.New("Get mini profile fail")
+	}
+
+	info := s.GetProfileInfo(sessID)
+	username, _ := info.Get("username").String()
+
+	maxLevel, err := database.GetSvc().GetMaxLevel()
+	if err != nil {
+		return nil, errors.Wrap(err, "Get mini profile fail")
+	}
+
+	pmc := p.GetByPath("characters", "pmc")
+	if !pmc.Exists() {
+		return nil, errors.New(util.ErrProfileCrash)
+	}
+
+	pbs := `{
+    "username": "%s",
+    "nickname": "%s",
+    "side": "%s",
+    "currlvl": %d,
+    "currexp": %d,
+    "prevexp": %d,
+    "nextlvl": %d,
+    "maxlvl": %d,
+    "akiData": %s
+}`
+
+	if !pmc.Get("Info").Exists() || !pmc.GetByPath("Info", "Level").Exists() {
+		n, err := sonic.GetFromString(
+			fmt.Sprintf(pbs, username, "unknown", "unknown", 0, 0, 0, 0, maxLevel, s.GetDefaultAkiData()))
+		return &n, err
+	}
+
+	nickname, _ := info.Get("Nickname").String()
+	side, _ := info.Get("Side").String()
+	currLvl, _ := pmc.GetByPath("Info", "Level").Int64()
+	currExp, _ := pmc.GetByPath("Info", "Experience").Int64()
+	var prevExp int64
+	if currLvl > 0 {
+		prevExp, _ = s.GetExperience(int(currLvl))
+	}
+	nextLvl, _ := s.GetExperience(int(currLvl) - 1)
+	n, err := sonic.GetFromString(
+		fmt.Sprintf(pbs, username, nickname, side, currLvl, currExp, prevExp, nextLvl, maxLevel, s.GetDefaultAkiData()))
+	return &n, err
+}
+
+func (s *Svc) GetDefaultAkiData() string {
+	return fmt.Sprintf(`{"version":"%s"}`, httpd.Version)
+}
+
+func (s *Svc) GetExperience(lvl int) (int64, error) {
+	expTable, err := database.GetSvc().GetDatabase().GetByPath("globals", "config", "exp", "level", "exp_table").ArrayUseNode()
+	if err != nil {
+		return 0, errors.Wrap(err, "Get experience fail")
+	}
+
+	var exp int64
+
+	for i := 0; i < lvl && i < len(expTable)-1; i++ {
+		e, _ := expTable[i].Get("exp").Int64()
+		exp += e
+	}
+
+	return exp, nil
 }

@@ -20,6 +20,7 @@ import (
 const (
 	Name       = "httpd"
 	ServerName = "EFT-SPG Server"
+	Version    = "0.0.1"
 )
 
 var (
