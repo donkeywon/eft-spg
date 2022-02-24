@@ -7,6 +7,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/bytedance/sonic/ast"
 	"github.com/donkeywon/gtil/util"
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"sync"
@@ -45,6 +46,15 @@ type httpResponse struct {
 	ErrCode int         `json:"err"`
 	ErrMsg  string      `json:"errmsg"`
 	Data    interface{} `json:"data"`
+}
+
+func GetResponseWrapperFromInfo(code int, msg string, data interface{}) *httpResponseWrapper {
+	hr := _pool.Get().(*httpResponseWrapper)
+	hr.r.ErrCode = code
+	hr.r.ErrMsg = msg
+	hr.r.Data = data
+	hr.p = _pool
+	return hr
 }
 
 func GetResponseWrapper() *httpResponseWrapper {
@@ -133,19 +143,9 @@ func DoResponse(errCode int, errMsg string, data interface{}, w http.ResponseWri
 }
 
 func DoResponseJson(data interface{}, w http.ResponseWriter) error {
-	var err error
-	var bs []byte
-
-	switch data.(type) {
-	case []byte:
-		bs = data.([]byte)
-	case string:
-		bs = util.String2Bytes(data.(string))
-	default:
-		bs, err = sonic.Marshal(data)
-		if err != nil {
-			return err
-		}
+	bs, err := encodeResp(data)
+	if err != nil {
+		return errors.Wrap(err, ErrResponse)
 	}
 
 	return DoResponseJsonBytes(bs, w)
@@ -171,9 +171,9 @@ func DoResponseJsonBytes(data []byte, w http.ResponseWriter) error {
 }
 
 func DoResponseZlibJson(data interface{}, w http.ResponseWriter) error {
-	j, err := sonic.Marshal(data)
+	j, err := encodeResp(data)
 	if err != nil {
-		return err
+		return errors.Wrap(err, ErrResponse)
 	}
 
 	zr, err := zlib.NewReader(bytes.NewReader(j))
@@ -199,4 +199,41 @@ func DoResponseBytes(data []byte, httpCode int, w http.ResponseWriter) error {
 
 func DoResponseString(data string, httpCode int, w http.ResponseWriter) error {
 	return DoResponseBytes(util.String2Bytes(data), httpCode, w)
+}
+
+func encodeResp(data interface{}) ([]byte, error) {
+	var err error
+	var bs []byte
+
+	switch data.(type) {
+	case []byte:
+		bs = data.([]byte)
+	case string:
+		bs = util.String2Bytes(data.(string))
+	case *ast.Node:
+		bs, err = data.(*ast.Node).MarshalJSON()
+		if err != nil {
+			return nil, errors.Wrap(err, ErrEncodeResp)
+		}
+	case ast.Node:
+		d := data.(ast.Node)
+		bs, err = d.MarshalJSON()
+		if err != nil {
+			return nil, errors.Wrap(err, ErrEncodeResp)
+		}
+	case *httpResponseWrapper:
+		d := data.(*httpResponseWrapper)
+		defer d.Free()
+		bs, err = sonic.Marshal(d.r)
+		if err != nil {
+			return nil, errors.Wrap(err, ErrEncodeResp)
+		}
+	default:
+		bs, err = sonic.Marshal(data)
+		if err != nil {
+			return nil, errors.Wrap(err, ErrEncodeResp)
+		}
+	}
+
+	return bs, nil
 }

@@ -1,6 +1,7 @@
 package httpd
 
 import (
+	"eft-spg/service/cfg"
 	"eft-spg/service/database"
 	"eft-spg/service/eft"
 	"eft-spg/service/profile"
@@ -23,6 +24,10 @@ func (s *Svc) registerLauncherRouter() {
 	s.RegisterRouter("/launcher/profile/change/password", s.ChangePassword, true)
 	s.RegisterRouter("/launcher/profile/change/wipe", s.Wipe, true)
 	s.RegisterRouter("/launcher/profile/info", s.GetMiniProfile, true)
+	s.RegisterRouter("/launcher/profiles", s.GetAllMiniProfiles, true)
+	s.RegisterRouter("/launcher/server/version", s.GetServerVersion, true)
+	s.RegisterRouter("/launcher/profile/remove", s.RemoveProfile, true)
+	s.RegisterRouter("/launcher/profile/compatibleTarkovVersion", s.GetCompatibleTarkovVersion, true)
 	s.RegisterRouter("/launcher/ping", s.Ping, true)
 }
 
@@ -34,7 +39,7 @@ func (s *Svc) Connect(sessID string, body *ast.Node, r *http.Request) (interface
 
 	editions := "[\"" + strings.Join(pe, `","`) + "\"]"
 
-	resp := fmt.Sprintf(`{"backendUrl":"%s","name":"%s","editions":%s}`, s.backendUrl(), ServerName, editions)
+	resp := fmt.Sprintf(`{"backendUrl":"%s","name":"%s","editions":%s}`, s.backendUrl(), eft.ServerName, editions)
 	return util.String2Bytes(resp), nil
 }
 
@@ -131,11 +136,30 @@ func (s *Svc) Wipe(sessID string, body *ast.Node, r *http.Request) (interface{},
 }
 
 func (s *Svc) GetMiniProfile(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
+	return profile.GetSvc().GetMiniProfile(sessID)
+}
 
+func (s *Svc) GetAllMiniProfiles(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+	return profile.GetSvc().GetAllMiniProfiles()
 }
 
 func (s *Svc) Ping(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
+	return "pong!", nil
+}
 
+func (s *Svc) GetServerVersion(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+	return eft.Version, nil
+}
+
+func (s *Svc) RemoveProfile(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+	err := profile.GetSvc().RemoveProfile(sessID)
+	if err != nil {
+		return "false", err
+	}
+
+	return "true", nil
+}
+
+func (s *Svc) GetCompatibleTarkovVersion(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+	return cfg.GetSvc().GetConfig().GetByPath("aki", "compatibleTarkovVersion").String()
 }

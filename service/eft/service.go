@@ -1,12 +1,19 @@
 package eft
 
 import (
+	"eft-spg/service/profile"
 	"github.com/donkeywon/gtil/service"
 )
 
 const (
-	Name = "eft"
+	Name       = "eft"
+	ServerName = "EFT-SPG Server"
+	Version    = "0.0.1"
 )
+
+func init() {
+	profile.ServerVersion = Version
+}
 
 var (
 	svc *Svc

@@ -25,4 +25,9 @@ const (
 	ErrRegisterFail      = "Register fail"
 	ErrDatabaseFileCrash = "Database file crash"
 	ErrChangeUsername    = "Change username fail"
+	ErrGetMiniProfile    = "Get mini profile fail"
+
+	ErrEncodeResp    = "Encode resp fail"
+	ErrResponse      = "Response fail"
+	ErrRemoveProfile = "Remove profile fail"
 )

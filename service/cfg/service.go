@@ -21,14 +21,14 @@ func GetSvc() *Svc {
 
 type Svc struct {
 	*service.BaseService
-	Config *Config
+	config *Config
 	cfg    *ast.Node
 }
 
 func New(config *Config) *Svc {
 	svc = &Svc{
 		BaseService: service.NewBase(),
-		Config:      config,
+		config:      config,
 	}
 	return svc
 }

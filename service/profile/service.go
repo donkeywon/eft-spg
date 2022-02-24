@@ -2,7 +2,6 @@ package profile
 
 import (
 	"eft-spg/service/database"
-	"eft-spg/service/httpd"
 	"eft-spg/service/profile/hook"
 	"eft-spg/util"
 	"fmt"
@@ -10,6 +9,7 @@ import (
 	"github.com/bytedance/sonic/ast"
 	"github.com/donkeywon/gtil/service"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -24,6 +24,8 @@ const (
 
 var (
 	svc *Svc
+
+	ServerVersion string
 )
 
 func GetSvc() *Svc {
@@ -110,6 +112,11 @@ func (s *Svc) LoadProfile(sessID string) error {
 			return errors.Wrap(err, util.ErrReadProfile)
 		}
 
+		if !v.Get("info").Exists() {
+			s.Info("Profile file crash", zap.String("file", sessID+"."+ProfileFileExt))
+			return nil
+		}
+
 		s.SetProfile(sessID, &v)
 	}
 
@@ -163,7 +170,11 @@ func (s *Svc) SaveProfile(sessID string) error {
 
 func (s *Svc) GetSessProfileByUsername(username string) (string, *ast.Node) {
 	for sessID, profile := range s.profiles {
-		un, err := profile.GetByPath("info", "username").String()
+		unn := profile.GetByPath("info", "username")
+		if !unn.Exists() {
+			continue
+		}
+		un, err := unn.String()
 		if err != nil {
 			continue
 		}
@@ -182,7 +193,7 @@ func (s *Svc) GetProfileItemByPath(sesssID string, paths ...interface{}) *ast.No
 		return nil
 	}
 
-	n := p.GetByPath(paths)
+	n := p.GetByPath(paths...)
 	if !n.Exists() {
 		return nil
 	}
@@ -283,7 +294,7 @@ func (s *Svc) FullProfileFileName(sessID string) string {
 func (s *Svc) GetMiniProfile(sessID string) (*ast.Node, error) {
 	p := s.GetProfile(sessID)
 	if p == nil {
-		return nil, errors.New("Get mini profile fail")
+		return nil, errors.New(util.ErrGetMiniProfile)
 	}
 
 	info := s.GetProfileInfo(sessID)
@@ -291,7 +302,7 @@ func (s *Svc) GetMiniProfile(sessID string) (*ast.Node, error) {
 
 	maxLevel, err := database.GetSvc().GetMaxLevel()
 	if err != nil {
-		return nil, errors.Wrap(err, "Get mini profile fail")
+		return nil, errors.Wrap(err, util.ErrGetMiniProfile)
 	}
 
 	pmc := p.GetByPath("characters", "pmc")
@@ -314,13 +325,14 @@ func (s *Svc) GetMiniProfile(sessID string) (*ast.Node, error) {
 	if !pmc.Get("Info").Exists() || !pmc.GetByPath("Info", "Level").Exists() {
 		n, err := sonic.GetFromString(
 			fmt.Sprintf(pbs, username, "unknown", "unknown", 0, 0, 0, 0, maxLevel, s.GetDefaultAkiData()))
-		return &n, err
+		return &n, errors.Wrap(err, util.ErrGetMiniProfile)
 	}
 
-	nickname, _ := info.Get("Nickname").String()
-	side, _ := info.Get("Side").String()
-	currLvl, _ := pmc.GetByPath("Info", "Level").Int64()
-	currExp, _ := pmc.GetByPath("Info", "Experience").Int64()
+	pmcInfo := pmc.Get("Info")
+	nickname, _ := pmcInfo.Get("Nickname").String()
+	side, _ := pmcInfo.Get("Side").String()
+	currLvl, _ := pmcInfo.GetByPath("Level").Int64()
+	currExp, _ := pmcInfo.GetByPath("Experience").Int64()
 	var prevExp int64
 	if currLvl > 0 {
 		prevExp, _ = s.GetExperience(int(currLvl))
@@ -328,11 +340,25 @@ func (s *Svc) GetMiniProfile(sessID string) (*ast.Node, error) {
 	nextLvl, _ := s.GetExperience(int(currLvl) - 1)
 	n, err := sonic.GetFromString(
 		fmt.Sprintf(pbs, username, nickname, side, currLvl, currExp, prevExp, nextLvl, maxLevel, s.GetDefaultAkiData()))
-	return &n, err
+	return &n, errors.Wrap(err, util.ErrGetMiniProfile)
+}
+
+func (s *Svc) GetAllMiniProfiles() (*ast.Node, error) {
+	ps := ast.NewArray([]ast.Node{})
+
+	for sessID, _ := range s.profiles {
+		mp, err := s.GetMiniProfile(sessID)
+		if err != nil {
+			return nil, err
+		}
+		ps.Add(*mp)
+	}
+
+	return &ps, nil
 }
 
 func (s *Svc) GetDefaultAkiData() string {
-	return fmt.Sprintf(`{"version":"%s"}`, httpd.Version)
+	return fmt.Sprintf(`{"version":"%s"}`, ServerVersion)
 }
 
 func (s *Svc) GetExperience(lvl int) (int64, error) {
@@ -349,4 +375,18 @@ func (s *Svc) GetExperience(lvl int) (int64, error) {
 	}
 
 	return exp, nil
+}
+
+func (s *Svc) RemoveProfile(sessID string) error {
+	if s.GetProfile(sessID) == nil {
+		return errors.New(util.ErrUserNotExist)
+	}
+
+	delete(s.profiles, sessID)
+	err := os.Remove(s.FullPath(sessID))
+	if err != nil {
+		return errors.Wrap(err, util.ErrRemoveProfile)
+	}
+
+	return nil
 }

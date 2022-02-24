@@ -1,8 +1,11 @@
 package httpd
 
 import (
+	"eft-spg/service/database"
+	"eft-spg/util"
 	"github.com/bytedance/sonic/ast"
 	"net/http"
+	"time"
 )
 
 func (s *Svc) registerDataRouter() {
@@ -22,18 +25,18 @@ func (s *Svc) registerDataRouter() {
 }
 
 func (s *Svc) GetSettings(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	return database.GetSvc().GetDatabase().Get("settings"), nil
 }
 
 func (s *Svc) GetGlobals(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	g := database.GetSvc().GetDatabase().Get("globals")
+	g.SetAny("time", time.Now().Unix())
+	return g, nil
 }
 
 func (s *Svc) GetTemplateItems(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	i := database.GetSvc().GetDatabase().GetByPath("templates", "items")
+	return util.GetResponseWrapperFromInfo(util.ResponseCodeOK, "", i), nil
 }
 
 func (s *Svc) GetTemplateHandbook(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
