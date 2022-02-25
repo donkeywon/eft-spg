@@ -51,9 +51,11 @@ func (s *Svc) Login(sessID string, vars map[string]string, body *ast.Node, r *ht
 		return resp, errors.New(util2.ErrIllegalArg)
 	}
 
-	resp, err = eft.GetSvc().Login(username)
+	loginSessID, err := eft.GetSvc().Login(username)
 	if err != nil {
 		s.Error("User login fail", zap.Error(err))
+	} else {
+		resp = loginSessID
 	}
 
 	return resp, nil

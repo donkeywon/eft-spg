@@ -335,7 +335,7 @@ func (s *Svc) GetMiniProfile(sessID string) (*ast.Node, error) {
 	if currLvl > 0 {
 		prevExp, _ = s.GetExperience(int(currLvl))
 	}
-	nextLvl, _ := s.GetExperience(int(currLvl) - 1)
+	nextLvl, _ := s.GetExperience(int(currLvl) + 1)
 	n, err := sonic.GetFromString(
 		fmt.Sprintf(pbs, username, nickname, side, currLvl, currExp, prevExp, nextLvl, maxLevel, s.GetDefaultAkiData()))
 	return &n, errors.Wrap(err, util.ErrGetMiniProfile)

@@ -215,15 +215,19 @@ func encodeResp(data interface{}) ([]byte, error) {
 	case string:
 		bs = util.String2Bytes(data.(string))
 	case *ast.Node:
-		bs, err = data.(*ast.Node).MarshalJSON()
-		if err != nil {
-			return nil, errors.Wrap(err, ErrEncodeResp)
+		if data.(*ast.Node).Exists() {
+			bs, err = data.(*ast.Node).MarshalJSON()
+			if err != nil {
+				return nil, errors.Wrap(err, ErrEncodeResp)
+			}
 		}
 	case ast.Node:
 		d := data.(ast.Node)
-		bs, err = d.MarshalJSON()
-		if err != nil {
-			return nil, errors.Wrap(err, ErrEncodeResp)
+		if d.Exists() {
+			bs, err = d.MarshalJSON()
+			if err != nil {
+				return nil, errors.Wrap(err, ErrEncodeResp)
+			}
 		}
 	case *httpResponseWrapper:
 		d := data.(*httpResponseWrapper)

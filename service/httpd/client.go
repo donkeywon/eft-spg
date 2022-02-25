@@ -25,7 +25,7 @@ func (s *Svc) registerDataRouter() {
 }
 
 func (s *Svc) GetSettings(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return database.GetSvc().GetDatabase().Get("settings"), nil
+	return util.GetResponseWrapperFromData(database.GetSvc().GetDatabase().Get("settings")), nil
 }
 
 func (s *Svc) GetGlobals(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
