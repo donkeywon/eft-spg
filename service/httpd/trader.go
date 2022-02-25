@@ -6,22 +6,22 @@ import (
 )
 
 func (s *Svc) registerTraderRouter() {
-	s.RegisterRouter("/client/trading/api/getUserAssortPrice/trader/", s.GetProfilePurchases, false)
-	s.RegisterRouter("/client/trading/api/getTrader/", s.GetTrader, false)
-	s.RegisterRouter("/client/trading/api/getTraderAssort/", s.GetAssort, false)
+	s.RegisterRouter("/client/trading/api/getUserAssortPrice/trader/{traderID}", s.GetProfilePurchases)
+	s.RegisterRouter("/client/trading/api/getTrader/{traderID}", s.GetTrader)
+	s.RegisterRouter("/client/trading/api/getTraderAssort/{traderID}", s.GetAssort)
 }
 
-func (s *Svc) GetProfilePurchases(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetProfilePurchases(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 
 }
 
-func (s *Svc) GetTrader(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetTrader(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 
 }
 
-func (s *Svc) GetAssort(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetAssort(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 
 }

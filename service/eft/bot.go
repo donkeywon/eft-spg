@@ -15,5 +15,10 @@ func (s *Svc) GetBotLimit(typ string) (int64, error) {
 		typ = "assault"
 	}
 
-	return cfg.GetSvc().GetConfig().GetByPath("bot", "presetBatch", typ).Int64()
+	l := cfg.GetSvc().GetConfig().GetByPath("bot", "presetBatch", typ)
+	if l == nil {
+		return 0, errors.New(util.ErrIllegalArg)
+	}
+
+	return l.Int64()
 }

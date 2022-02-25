@@ -6,29 +6,29 @@ import (
 )
 
 func (s *Svc) registerRagfairRouter() {
-	s.RegisterRouter("/client/ragfair/search", s.Search, true)
-	s.RegisterRouter("/client/ragfair/find", s.Search, true)
-	s.RegisterRouter("/client/ragfair/itemMarketPrice", s.GetMarketPrice, true)
-	s.RegisterRouter("/client/items/prices", s.GetItemPrices, true)
-	s.RegisterRouter("/client/trading/api/traderSettings", s.GetTraderSettings, true)
+	s.RegisterRouter("/client/ragfair/search", s.Search)
+	s.RegisterRouter("/client/ragfair/find", s.Search)
+	s.RegisterRouter("/client/ragfair/itemMarketPrice", s.GetMarketPrice)
+	s.RegisterRouter("/client/items/prices", s.GetItemPrices)
+	s.RegisterRouter("/client/trading/api/traderSettings", s.GetTraderSettings)
 }
 
-func (s *Svc) Search(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) Search(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 
 }
 
-func (s *Svc) GetMarketPrice(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetMarketPrice(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 
 }
 
-func (s *Svc) GetItemPrices(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetItemPrices(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 
 }
 
-func (s *Svc) GetTraderSettings(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetTraderSettings(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 
 }

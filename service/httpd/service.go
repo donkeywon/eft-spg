@@ -30,10 +30,97 @@ func GetSvc() *Svc {
 	return svc
 }
 
-type ServiceProvider func(string, *ast.Node, *http.Request) (interface{}, error)
+type ServiceProvider func(string, map[string]string, *ast.Node, *http.Request) (interface{}, error)
 
-func (sp ServiceProvider) Handle(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return sp(sessID, body, r)
+func (sp ServiceProvider) Handle(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
+	return sp(sessID, vars, body, r)
+}
+
+type RouteHandler struct {
+	sp     ServiceProvider
+	logger *zap.Logger
+}
+
+func NewRouteHandler(sp ServiceProvider, logger *zap.Logger) *RouteHandler {
+	return &RouteHandler{
+		sp:     sp,
+		logger: logger,
+	}
+}
+
+func (rh *RouteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	start := time.Now().UnixNano()
+	defer func() {
+		end := time.Now().UnixNano()
+		rh.logger.Info("Handle req", zap.String("url", r.RequestURI), zap.String("cost", fmt.Sprintf("%.3fms", float64(end-start)/1000000)))
+	}()
+
+	err := rh.preHandle(w, r)
+	if err != nil {
+		rh.logger.Error("Pre handle req fail", zap.Error(err))
+	}
+
+	err = rh.handleReq(w, r)
+	if err != nil {
+		rh.logger.Error("Handle req fail", zap.Error(err))
+	}
+
+	err = rh.postHandle(w, r)
+	if err != nil {
+		rh.logger.Error("Post handle req fail", zap.Error(err))
+	}
+}
+
+func (rh *RouteHandler) preHandle(w http.ResponseWriter, r *http.Request) error {
+	r.RequestURI = strings.Split(r.RequestURI, "?retry=")[0]
+
+	return nil
+}
+
+func (rh *RouteHandler) handleReq(w http.ResponseWriter, r *http.Request) error {
+	sessID := util.GetSessionID(r)
+
+	var err error
+	buf := util.GetBuffer()
+	defer buf.Free()
+	if r.ContentLength > 0 {
+		_, err = buf.ReadFrom(r.Body)
+		if err != nil {
+			return errors.Wrap(err, util.ErrReadBody)
+		}
+	}
+
+	var n ast.Node
+
+	if buf.Len() > 0 {
+		n, err = sonic.Get(buf.Bytes())
+		if err != nil {
+			return errors.Wrap(err, util.ErrParseJson)
+		}
+	} else {
+		n = util.GetEmptyJsonNode()
+	}
+
+	resp, err := rh.sp.Handle(sessID, mux.Vars(r), &n, r)
+	if err != nil {
+		rh.logger.Error("Handle req fail", zap.Error(err))
+	}
+
+	err = rh.sendResponse(resp, w)
+	if err != nil {
+		return errors.Wrap(err, util.ErrSendResponse)
+	}
+
+	return nil
+}
+
+func (rh *RouteHandler) postHandle(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
+func (rh *RouteHandler) sendResponse(resp interface{}, w http.ResponseWriter) error {
+	//return util.DoResponseZlibJson(resp, w)
+	return util.DoResponseJson(resp, w)
 }
 
 type Svc struct {
@@ -41,20 +128,18 @@ type Svc struct {
 	httpd  *httpd.HttpD
 	Config *httpd.Config
 
-	staticRouters  map[string]ServiceProvider
-	dynamicRouters map[string]ServiceProvider
+	routers map[string]ServiceProvider
 
 	middleWares []mux.MiddlewareFunc
 }
 
 func New(config *httpd.Config) *Svc {
 	svc = &Svc{
-		BaseService:    service.NewBase(),
-		httpd:          httpd.New(config),
-		Config:         config,
-		staticRouters:  make(map[string]ServiceProvider),
-		dynamicRouters: make(map[string]ServiceProvider),
-		middleWares:    []mux.MiddlewareFunc{},
+		BaseService: service.NewBase(),
+		httpd:       httpd.New(config),
+		Config:      config,
+		routers:     make(map[string]ServiceProvider),
+		middleWares: []mux.MiddlewareFunc{},
 	}
 
 	svc.registerRouter()
@@ -90,114 +175,22 @@ func (s *Svc) RegisterMiddleware(middlewareFunc mux.MiddlewareFunc) {
 	s.middleWares = append(s.middleWares, middlewareFunc)
 }
 
-func (s *Svc) RegisterRouter(path string, f ServiceProvider, static bool) {
-	if static {
-		s.staticRouters[path] = f
-	} else {
-		s.dynamicRouters[path] = f
-	}
+func (s *Svc) RegisterRouter(path string, sp ServiceProvider) {
+	s.routers[path] = sp
 }
 
 func (s *Svc) GetRouter() *mux.Router {
 	router := mux.NewRouter()
 
-	router.PathPrefix("/").HandlerFunc(s.HomeHandler)
+	for path, sp := range s.routers {
+		router.Handle(path, NewRouteHandler(sp, s.Logger))
+	}
 
 	for _, m := range s.middleWares {
 		router.Use(m)
 	}
 
 	return router
-}
-
-func (s *Svc) HomeHandler(w http.ResponseWriter, r *http.Request) {
-	start := time.Now().UnixNano()
-	defer func() {
-		end := time.Now().UnixNano()
-		s.Info("Handle req", zap.String("url", r.RequestURI), zap.String("cost", fmt.Sprintf("%.3fms", float64(end-start)/1000000)))
-	}()
-
-	err := s.preHandle(w, r)
-	if err != nil {
-		s.Error("Pre handle req fail", zap.Error(err))
-	}
-
-	err = s.handleReq(w, r)
-	if err != nil {
-		s.Error("Handle req fail", zap.Error(err))
-	}
-
-	err = s.postHandle(w, r)
-	if err != nil {
-		s.Error("Post handle req fail", zap.Error(err))
-	}
-}
-
-func (s *Svc) preHandle(w http.ResponseWriter, r *http.Request) error {
-	r.RequestURI = strings.Split(r.RequestURI, "?retry=")[0]
-
-	return nil
-}
-
-func (s *Svc) handleReq(w http.ResponseWriter, r *http.Request) error {
-	sessID := util.GetSessionID(r)
-
-	var err error
-	buf := util.GetBuffer()
-	defer buf.Free()
-	if r.ContentLength > 0 {
-		_, err = buf.ReadFrom(r.Body)
-		if err != nil {
-			return errors.Wrap(err, util.ErrReadBody)
-		}
-	}
-
-	var n ast.Node
-
-	if buf.Len() > 0 {
-		n, err = sonic.Get(buf.Bytes())
-		if err != nil {
-			return errors.Wrap(err, util.ErrParseJson)
-		}
-	} else {
-		n = util.GetEmptyJsonNode()
-	}
-
-	sp := s.getServiceProvider(r)
-	if sp == nil {
-		return errors.New(util.ErrRouterNotFound)
-	}
-
-	resp, err := sp.Handle(sessID, &n, r)
-	if err != nil {
-		s.Error("Handle req fail", zap.Error(err))
-	}
-
-	err = s.sendResponse(resp, w)
-	if err != nil {
-		return errors.Wrap(err, util.ErrSendResponse)
-	}
-
-	return nil
-}
-
-func (s *Svc) postHandle(w http.ResponseWriter, r *http.Request) error {
-	return nil
-}
-
-func (s *Svc) getServiceProvider(r *http.Request) ServiceProvider {
-	sSP, exist := s.staticRouters[r.RequestURI]
-	if exist {
-		return sSP
-	}
-
-	for uri, dSP := range s.dynamicRouters {
-		if strings.Index(r.RequestURI, uri) == 0 {
-			return dSP
-		}
-	}
-
-	return nil
 }
 
 func (s *Svc) sendResponse(resp interface{}, w http.ResponseWriter) error {

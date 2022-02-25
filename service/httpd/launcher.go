@@ -16,22 +16,22 @@ import (
 )
 
 func (s *Svc) registerLauncherRouter() {
-	s.RegisterRouter("/launcher/server/connect", s.Connect, true)
-	s.RegisterRouter("/launcher/profile/login", s.Login, true)
-	s.RegisterRouter("/launcher/profile/register", s.Register, true)
-	s.RegisterRouter("/launcher/profile/get", s.GetProfile, true)
-	s.RegisterRouter("/launcher/profile/change/username", s.ChangeUsername, true)
-	s.RegisterRouter("/launcher/profile/change/password", s.ChangePassword, true)
-	s.RegisterRouter("/launcher/profile/change/wipe", s.Wipe, true)
-	s.RegisterRouter("/launcher/profile/info", s.GetMiniProfile, true)
-	s.RegisterRouter("/launcher/profiles", s.GetAllMiniProfiles, true)
-	s.RegisterRouter("/launcher/server/version", s.GetServerVersion, true)
-	s.RegisterRouter("/launcher/profile/remove", s.RemoveProfile, true)
-	s.RegisterRouter("/launcher/profile/compatibleTarkovVersion", s.GetCompatibleTarkovVersion, true)
-	s.RegisterRouter("/launcher/ping", s.Ping, true)
+	s.RegisterRouter("/launcher/server/connect", s.Connect)
+	s.RegisterRouter("/launcher/profile/login", s.Login)
+	s.RegisterRouter("/launcher/profile/register", s.Register)
+	s.RegisterRouter("/launcher/profile/get", s.GetProfile)
+	s.RegisterRouter("/launcher/profile/change/username", s.ChangeUsername)
+	s.RegisterRouter("/launcher/profile/change/password", s.ChangePassword)
+	s.RegisterRouter("/launcher/profile/change/wipe", s.Wipe)
+	s.RegisterRouter("/launcher/profile/info", s.GetMiniProfile)
+	s.RegisterRouter("/launcher/profiles", s.GetAllMiniProfiles)
+	s.RegisterRouter("/launcher/server/version", s.GetServerVersion)
+	s.RegisterRouter("/launcher/profile/remove", s.RemoveProfile)
+	s.RegisterRouter("/launcher/profile/compatibleTarkovVersion", s.GetCompatibleTarkovVersion)
+	s.RegisterRouter("/launcher/ping", s.Ping)
 }
 
-func (s *Svc) Connect(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) Connect(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	pe, err := database.GetSvc().GetProfileEditions()
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (s *Svc) Connect(sessID string, body *ast.Node, r *http.Request) (interface
 	return util.String2Bytes(resp), nil
 }
 
-func (s *Svc) Login(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) Login(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	resp := "FAILED"
 
 	username, err := body.Get("username").String()
@@ -59,7 +59,7 @@ func (s *Svc) Login(sessID string, body *ast.Node, r *http.Request) (interface{}
 	return resp, nil
 }
 
-func (s *Svc) Register(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) Register(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	_, err := eft.GetSvc().Register(body)
 	if err != nil {
 		return "FAILED", errors.Wrap(err, util2.ErrRegisterFail)
@@ -67,7 +67,7 @@ func (s *Svc) Register(sessID string, body *ast.Node, r *http.Request) (interfac
 	return "OK", nil
 }
 
-func (s *Svc) GetProfile(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetProfile(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	username, err := body.Get("username").String()
 	if err != nil {
 		return "", errors.New(util2.ErrIllegalArg)
@@ -81,7 +81,7 @@ func (s *Svc) GetProfile(sessID string, body *ast.Node, r *http.Request) (interf
 	return p.Get("info").MarshalJSON()
 }
 
-func (s *Svc) ChangeUsername(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) ChangeUsername(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	old, err := body.Get("username").String()
 	if err != nil {
 		return "FAILED", errors.New(util2.ErrIllegalArg)
@@ -99,7 +99,7 @@ func (s *Svc) ChangeUsername(sessID string, body *ast.Node, r *http.Request) (in
 	return "OK", nil
 }
 
-func (s *Svc) ChangePassword(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) ChangePassword(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	newPw, err := body.Get("change").String()
 	if err != nil {
 		return "FAILED", errors.New(util2.ErrIllegalArg)
@@ -117,7 +117,7 @@ func (s *Svc) ChangePassword(sessID string, body *ast.Node, r *http.Request) (in
 	return "OK", nil
 }
 
-func (s *Svc) Wipe(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) Wipe(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	username, err := body.Get("username").String()
 	if err != nil {
 		return "FAILED", errors.New(util2.ErrIllegalArg)
@@ -135,23 +135,23 @@ func (s *Svc) Wipe(sessID string, body *ast.Node, r *http.Request) (interface{},
 	return "OK", nil
 }
 
-func (s *Svc) GetMiniProfile(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetMiniProfile(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return profile.GetSvc().GetMiniProfile(sessID)
 }
 
-func (s *Svc) GetAllMiniProfiles(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetAllMiniProfiles(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return profile.GetSvc().GetAllMiniProfiles()
 }
 
-func (s *Svc) Ping(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) Ping(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return "pong!", nil
 }
 
-func (s *Svc) GetServerVersion(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetServerVersion(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return eft.Version, nil
 }
 
-func (s *Svc) RemoveProfile(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) RemoveProfile(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	err := profile.GetSvc().RemoveProfile(sessID)
 	if err != nil {
 		return "false", err
@@ -160,6 +160,6 @@ func (s *Svc) RemoveProfile(sessID string, body *ast.Node, r *http.Request) (int
 	return "true", nil
 }
 
-func (s *Svc) GetCompatibleTarkovVersion(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetCompatibleTarkovVersion(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return cfg.GetSvc().GetConfig().GetByPath("aki", "compatibleTarkovVersion").String()
 }

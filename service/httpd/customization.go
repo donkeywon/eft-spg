@@ -6,16 +6,16 @@ import (
 )
 
 func (s *Svc) registerCustomizationRouter() {
-	s.RegisterRouter("/client/trading/customization/storage", s.GetSuits, true)
-	s.RegisterRouter("/client/trading/customization/", s.GetTraderSuits, false)
+	s.RegisterRouter("/client/trading/customization/storage", s.GetSuits)
+	s.RegisterRouter("/client/trading/customization/{traderID}/{aaa}", s.GetTraderSuits)
 }
 
-func (s *Svc) GetSuits(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetSuits(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 
 }
 
-func (s *Svc) GetTraderSuits(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetTraderSuits(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 
 }

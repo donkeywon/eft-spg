@@ -6,10 +6,10 @@ import (
 )
 
 func (s *Svc) registerItemEventRouter() {
-	s.RegisterRouter("/client/game/profile/items/moving", s.HandleEvents, true)
+	s.RegisterRouter("/client/game/profile/items/moving", s.HandleEvents)
 }
 
-func (s *Svc) HandleEvents(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) HandleEvents(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 
 }

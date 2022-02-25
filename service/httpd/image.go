@@ -6,12 +6,12 @@ import (
 )
 
 func (s *Svc) registerImageRouter() {
-	s.RegisterRouter(".jpg", s.GetImage, false)
-	s.RegisterRouter(".png", s.GetImage, false)
-	s.RegisterRouter(".ico", s.GetImage, false)
+	s.RegisterRouter(".jpg", s.GetImage)
+	s.RegisterRouter(".png", s.GetImage)
+	s.RegisterRouter(".ico", s.GetImage)
 }
 
-func (s *Svc) GetImage(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetImage(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 
 }

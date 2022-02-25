@@ -6,10 +6,10 @@ import (
 )
 
 func (s *Svc) registerWeatherRouter() {
-	s.RegisterRouter("/client/weather", s.GetWeather, true)
+	s.RegisterRouter("/client/weather", s.GetWeather)
 }
 
-func (s *Svc) GetWeather(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetWeather(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 
 }

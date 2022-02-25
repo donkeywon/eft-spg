@@ -6,10 +6,10 @@ import (
 )
 
 func (s *Svc) registerPresetBuildRouter() {
-	s.RegisterRouter("/client/handbook/builds/my/list", s.GetHandbookUserList, true)
+	s.RegisterRouter("/client/handbook/builds/my/list", s.GetHandbookUserList)
 }
 
-func (s *Svc) GetHandbookUserList(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) GetHandbookUserList(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 
 }

@@ -6,14 +6,14 @@ import (
 )
 
 func (s *Svc) registerQuestRouter() {
-	s.RegisterRouter("/client/quest/list", s.ListQuests, true)
-	s.RegisterRouter("/client/repeatalbeQuests/activityPeriods", s.ActivityPeriods, true)
+	s.RegisterRouter("/client/quest/list", s.ListQuests)
+	s.RegisterRouter("/client/repeatalbeQuests/activityPeriods", s.ActivityPeriods)
 }
 
-func (s *Svc) ListQuests(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) ListQuests(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 }
 
-func (s *Svc) ActivityPeriods(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+func (s *Svc) ActivityPeriods(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	return nil, nil
 }
