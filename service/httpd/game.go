@@ -1,6 +1,7 @@
 package httpd
 
 import (
+	"eft-spg/util"
 	"github.com/bytedance/sonic/ast"
 	"net/http"
 )
@@ -27,8 +28,7 @@ func (s *Svc) ListServer(sessID string, vars map[string]string, body *ast.Node, 
 }
 
 func (s *Svc) ValidateVersion(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	return util.GetResponseWrapperFromData(nil), nil
 }
 
 func (s *Svc) StartGame(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {

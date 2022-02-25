@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/bytedance/sonic v1.1.0
-	github.com/donkeywon/gtil v0.1.9
+	github.com/donkeywon/gtil v0.2.0
 	github.com/gobuffalo/packd v1.0.1
 	github.com/gobuffalo/packr/v2 v2.8.3
 	github.com/gorilla/mux v1.8.0

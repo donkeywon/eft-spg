@@ -24,8 +24,6 @@ const (
 
 var (
 	svc *Svc
-
-	ServerVersion string
 )
 
 func GetSvc() *Svc {
@@ -358,7 +356,7 @@ func (s *Svc) GetAllMiniProfiles() (*ast.Node, error) {
 }
 
 func (s *Svc) GetDefaultAkiData() string {
-	return fmt.Sprintf(`{"version":"%s"}`, ServerVersion)
+	return fmt.Sprintf(`{"version":"%s"}`, util.ServerVersion)
 }
 
 func (s *Svc) GetExperience(lvl int) (int64, error) {

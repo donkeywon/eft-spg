@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func GenerateSessID() string {
+func GenerateID() string {
 	h := sha1.New()
 	t := rand.Int63() * time.Now().UnixNano()
 

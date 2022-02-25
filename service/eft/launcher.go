@@ -46,7 +46,7 @@ func (s *Svc) Register(info *ast.Node) (string, error) {
 }
 
 func (s *Svc) createAccount(username string, password string, edition string) {
-	sessID := util.GenerateSessID()
+	sessID := util.GenerateID()
 
 	info := fmt.Sprintf(`{
 "info": {

@@ -1,8 +1,11 @@
 package httpd
 
 import (
+	"eft-spg/util"
+	"fmt"
 	"github.com/bytedance/sonic/ast"
 	"net/http"
+	"time"
 )
 
 func (s *Svc) registerDialogRouter() {
@@ -22,13 +25,28 @@ func (s *Svc) registerDialogRouter() {
 }
 
 func (s *Svc) ListFriend(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	return []byte(`{"Friends":[],"Ignore":[],"InIgnoreList":[]}`), nil
 }
 
 func (s *Svc) ListChatServer(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	return fmt.Sprintf(`[
+{
+    "_id": "%s",
+    "RegistrationId": 20,
+    "DateTime": %d,
+    "IsDeveloper": true,
+    "Regions": ["EUR"],
+    "VersionId": "bgkidft87ddd",
+    "Ip": "",
+    "Port": 0,
+    "Chats": [
+        {
+            "_id": "0",
+            "Members": 0
+        }
+    ]
+}
+]`, util.GenerateID(), time.Now().Unix()), nil
 }
 
 func (s *Svc) ListMailDialog(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {

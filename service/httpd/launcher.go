@@ -39,7 +39,7 @@ func (s *Svc) Connect(sessID string, vars map[string]string, body *ast.Node, r *
 
 	editions := "[\"" + strings.Join(pe, `","`) + "\"]"
 
-	resp := fmt.Sprintf(`{"backendUrl":"%s","name":"%s","editions":%s}`, s.backendUrl(), eft.ServerName, editions)
+	resp := fmt.Sprintf(`{"backendUrl":"%s","name":"%s","editions":%s}`, s.backendUrl(), util2.ServerName, editions)
 	return util.String2Bytes(resp), nil
 }
 
@@ -148,7 +148,7 @@ func (s *Svc) Ping(sessID string, vars map[string]string, body *ast.Node, r *htt
 }
 
 func (s *Svc) GetServerVersion(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return eft.Version, nil
+	return util2.ServerVersion, nil
 }
 
 func (s *Svc) RemoveProfile(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
