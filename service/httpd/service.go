@@ -134,9 +134,7 @@ func (s *Svc) HomeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Svc) preHandle(w http.ResponseWriter, r *http.Request) error {
-	if strings.Index(r.RequestURI, "?retry=") > 0 {
-		r.RequestURI = strings.Split(r.RequestURI, "?retry=")[0]
-	}
+	r.RequestURI = strings.Split(r.RequestURI, "?retry=")[0]
 
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"eft-spg/util"
 	"github.com/bytedance/sonic/ast"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -20,7 +21,7 @@ func (s *Svc) registerDataRouter() {
 	s.RegisterRouter("/client/hideout/areas", s.GetHideoutAreas, true)
 	s.RegisterRouter("/client/hideout/production/scavcase/recipes", s.GetHideoutScavcase, true)
 	s.RegisterRouter("/client/languages", s.GetLocalesLanguages, true)
-	s.RegisterRouter("/client/menu/locale/{locale}", s.GetLocalesMenu, false)
+	s.RegisterRouter("/client/menu/locale/", s.GetLocalesMenu, false)
 	s.RegisterRouter("/client/locale/", s.GetLocalesGlobal, false)
 }
 
@@ -36,55 +37,60 @@ func (s *Svc) GetGlobals(sessID string, body *ast.Node, r *http.Request) (interf
 
 func (s *Svc) GetTemplateItems(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
 	i := database.GetSvc().GetDatabase().GetByPath("templates", "items")
-	return util.GetResponseWrapperFromInfo(util.ResponseCodeOK, "", i), nil
+	return util.GetResponseWrapperFromData(i), nil
 }
 
 func (s *Svc) GetTemplateHandbook(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	b := database.GetSvc().GetDatabase().GetByPath("templates", "handbook")
+	return util.GetResponseWrapperFromData(b), nil
 }
 
 func (s *Svc) GetTemplateSuits(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	c := database.GetSvc().GetDatabase().GetByPath("templates", "customization")
+	return util.GetResponseWrapperFromData(c), nil
 }
 
 func (s *Svc) GetTemplateCharacter(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
+	c := database.GetSvc().GetDatabase().GetByPath("templates", "character")
+	return util.GetResponseWrapperFromData(c), nil
+}
 
+func (s *Svc) GetTemplateQuests(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
+	q := database.GetSvc().GetDatabase().GetByPath("templates", "quests")
+	return util.GetResponseWrapperFromData(q), nil
 }
 
 func (s *Svc) GetHideoutProduction(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	p := database.GetSvc().GetDatabase().GetByPath("hideout", "production")
+	return util.GetResponseWrapperFromData(p), nil
 }
 
 func (s *Svc) GetHideoutSettings(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	st := database.GetSvc().GetDatabase().GetByPath("hideout", "settings")
+	return util.GetResponseWrapperFromData(st), nil
 }
 
 func (s *Svc) GetHideoutAreas(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	a := database.GetSvc().GetDatabase().GetByPath("hideout", "areas")
+	return util.GetResponseWrapperFromData(a), nil
 }
 
 func (s *Svc) GetHideoutScavcase(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	sc := database.GetSvc().GetDatabase().GetByPath("hideout", "scavcase")
+	return util.GetResponseWrapperFromData(sc), nil
 }
 
 func (s *Svc) GetLocalesLanguages(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	l := database.GetSvc().GetDatabase().GetByPath("locales", "languages")
+	return util.GetResponseWrapperFromData(l), nil
 }
 
 func (s *Svc) GetLocalesMenu(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	m := database.GetSvc().GetDatabase().GetByPath("locales", "menu", strings.Split(r.RequestURI, "/client/menu/locale/")[1])
+	return util.GetResponseWrapperFromData(m), nil
 }
 
 func (s *Svc) GetLocalesGlobal(sessID string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	g := database.GetSvc().GetDatabase().GetByPath("locales", "global", strings.Split(r.RequestURI, "/client/locale/")[1])
+	return util.GetResponseWrapperFromData(g), nil
 }

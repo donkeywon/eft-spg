@@ -48,6 +48,10 @@ type httpResponse struct {
 	Data    interface{} `json:"data"`
 }
 
+func GetResponseWrapperFromData(data interface{}) *httpResponseWrapper {
+	return GetResponseWrapperFromInfo(ResponseCodeOK, "", data)
+}
+
 func GetResponseWrapperFromInfo(code int, msg string, data interface{}) *httpResponseWrapper {
 	hr := _pool.Get().(*httpResponseWrapper)
 	hr.r.ErrCode = code
