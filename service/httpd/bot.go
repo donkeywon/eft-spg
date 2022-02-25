@@ -24,8 +24,7 @@ func (s *Svc) GetBotLimit(sessID string, vars map[string]string, body *ast.Node,
 }
 
 func (s *Svc) GetBotDifficulty(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	return eft.GetSvc().GetBotDifficulty(vars["type"], vars["difficulty"])
 }
 
 func (s *Svc) GenerateBots(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
@@ -34,6 +33,5 @@ func (s *Svc) GenerateBots(sessID string, vars map[string]string, body *ast.Node
 }
 
 func (s *Svc) GetBotCap(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return nil, nil
-
+	return eft.GetSvc().GetBotCap(), nil
 }
