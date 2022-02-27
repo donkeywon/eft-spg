@@ -10,7 +10,8 @@ import (
 
 func GenerateID() string {
 	h := sha1.New()
-	t := rand.Int63() * time.Now().UnixNano()
+	rand.Seed(time.Now().UnixNano())
+	t := rand.Float64() * float64(time.Now().UnixNano())
 
 	h.Write([]byte(strconv.Itoa(int(t))))
 	return hex.EncodeToString(h.Sum(nil))[:24]

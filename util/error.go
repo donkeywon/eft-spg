@@ -30,4 +30,5 @@ const (
 	ErrEncodeResp    = "Encode resp fail"
 	ErrResponse      = "Response fail"
 	ErrRemoveProfile = "Remove profile fail"
+	ErrCreateProfile = "Create profile fail"
 )

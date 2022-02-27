@@ -14,6 +14,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 )
 
 const (
@@ -70,7 +72,7 @@ func (s *Svc) Open() error {
 			return nil
 		}
 
-		err = s.LoadProfile(fn)
+		err = LoadProfile(fn)
 		if err != nil {
 			return err
 		}
@@ -96,9 +98,9 @@ func (s *Svc) Shutdown() error {
 	return nil
 }
 
-func (s *Svc) LoadProfile(sessID string) error {
+func LoadProfile(sessID string) error {
 	var err error
-	filename := s.FullPath(sessID)
+	filename := FullPath(sessID)
 	if util.FileExist(filename) {
 		bs, err := ioutil.ReadFile(filename)
 		if err != nil {
@@ -111,14 +113,14 @@ func (s *Svc) LoadProfile(sessID string) error {
 		}
 
 		if !v.Get("info").Exists() {
-			s.Info("Profile file crash", zap.String("file", sessID+"."+ProfileFileExt))
+			GetSvc().Info("Profile file crash", zap.String("file", sessID+"."+ProfileFileExt))
 			return nil
 		}
 
-		s.SetProfile(sessID, &v)
+		SetProfile(sessID, &v)
 	}
 
-	hook.PostLoadHook(s.GetProfile(sessID))
+	hook.PostLoadHook(GetProfile(sessID))
 
 	return err
 }
@@ -130,22 +132,22 @@ func InitialProfile() *ast.Node {
 	return &p
 }
 
-func (s *Svc) GetProfile(sessID string) *ast.Node {
-	return s.profiles[sessID]
+func GetProfile(sessID string) *ast.Node {
+	return GetSvc().profiles[sessID]
 }
 
-func (s *Svc) SetProfile(sessID string, v *ast.Node) {
-	s.profiles[sessID] = v
+func SetProfile(sessID string, v *ast.Node) {
+	GetSvc().profiles[sessID] = v
 }
 
 // TODO go update
-func (s *Svc) SaveProfile(sessID string) error {
-	filePath := s.FullPath(sessID)
+func SaveProfile(sessID string) error {
+	filePath := FullPath(sessID)
 
-	p := s.GetProfile(sessID)
+	p := GetProfile(sessID)
 	if p == nil {
 		p = InitialProfile()
-		s.SetProfile(sessID, p)
+		SetProfile(sessID, p)
 	}
 
 	f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, ProfileFilePerm)
@@ -166,8 +168,8 @@ func (s *Svc) SaveProfile(sessID string) error {
 	return nil
 }
 
-func (s *Svc) GetSessProfileByUsername(username string) (string, *ast.Node) {
-	for sessID, profile := range s.profiles {
+func GetSessProfileByUsername(username string) (string, *ast.Node) {
+	for sessID, profile := range GetSvc().profiles {
 		unn := profile.GetByPath("info", "username")
 		if !unn.Exists() {
 			continue
@@ -185,8 +187,8 @@ func (s *Svc) GetSessProfileByUsername(username string) (string, *ast.Node) {
 	return "", nil
 }
 
-func (s *Svc) GetProfileItemByPath(sesssID string, paths ...interface{}) *ast.Node {
-	p := s.GetProfile(sesssID)
+func GetProfileItemByPath(sesssID string, paths ...interface{}) *ast.Node {
+	p := GetProfile(sesssID)
 	if p == nil {
 		return nil
 	}
@@ -199,20 +201,20 @@ func (s *Svc) GetProfileItemByPath(sesssID string, paths ...interface{}) *ast.No
 	return n
 }
 
-func (s *Svc) GetCharacterProfile(sessID string, typ string) *ast.Node {
-	return s.GetProfileItemByPath(sessID, "characters", typ)
+func GetCharacterProfile(sessID string, typ string) *ast.Node {
+	return GetProfileItemByPath(sessID, "characters", typ)
 }
 
-func (s *Svc) GetPMCProfile(sessID string) *ast.Node {
-	return s.GetCharacterProfile(sessID, "pmc")
+func GetPMCProfile(sessID string) *ast.Node {
+	return GetCharacterProfile(sessID, "pmc")
 }
 
-func (s *Svc) GetScavProfile(sessID string) *ast.Node {
-	return s.GetCharacterProfile(sessID, "scav")
+func GetScavProfile(sessID string) *ast.Node {
+	return GetCharacterProfile(sessID, "scav")
 }
 
-func (s *Svc) SetScavProfile(sessID string, sp *ast.Node) error {
-	p := s.GetProfile(sessID)
+func SetScavProfile(sessID string, sp *ast.Node) error {
+	p := GetProfile(sessID)
 	if p == nil {
 		return nil
 	}
@@ -232,21 +234,21 @@ func (s *Svc) SetScavProfile(sessID string, sp *ast.Node) error {
 	return nil
 }
 
-func (s *Svc) GetCompleteProfile(sessID string) *ast.Node {
+func GetCompleteProfile(sessID string) *ast.Node {
 	v := util.GetEmptyJsonArray()
 
-	if !s.IsWipe(sessID) {
+	if !IsWipe(sessID) {
 		return &v
 	}
 
 	i := 0
-	pmcProfile := s.GetPMCProfile(sessID)
+	pmcProfile := GetPMCProfile(sessID)
 	if pmcProfile != nil {
 		v.SetByIndex(i, *pmcProfile)
 		i++
 	}
 
-	scavProfile := s.GetScavProfile(sessID)
+	scavProfile := GetScavProfile(sessID)
 	if scavProfile != nil {
 		v.SetByIndex(i, *scavProfile)
 	}
@@ -254,16 +256,73 @@ func (s *Svc) GetCompleteProfile(sessID string) *ast.Node {
 	return &v
 }
 
-func (s *Svc) GetProfileInfo(sessID string) *ast.Node {
-	return s.GetProfileItemByPath(sessID, "info")
+func GetProfileInfo(sessID string) *ast.Node {
+	return GetProfileItemByPath(sessID, "info")
 }
 
-func (s *Svc) CreateProfile() {
+func CreateProfile(sessID string, info *ast.Node) error {
+	if !info.Get("side").Exists() ||
+		!info.Get("nickname").Exists() ||
+		!info.Get("voiceId").Exists() ||
+		!info.Get("headId").Exists() ||
+		sessID == "" {
+		return errors.New(util.ErrIllegalArg)
+	}
+
+	side, _ := info.Get("side").String()
+	nickname, _ := info.Get("nickname").String()
+	voiceId, _ := info.Get("voiceId").String()
+	headId, _ := info.Get("headId").String()
+
+	if !database.GetDatabase().GetByPath("templates", "customization", voiceId, "_name").Exists() {
+		return errors.New(util.ErrIllegalArg)
+	}
+
+	pInfo := GetProfileInfo(sessID)
+	edition, _ := pInfo.Get("edition").String()
+	tp := database.GetDatabase().GetByPath("profiles", edition, strings.ToLower(side))
+	pmcD := tp.Get("character")
+
+	if GetProfile(sessID) != nil {
+		RemoveProfile(sessID)
+	}
+
+	pmcD.SetAny("_id", "pmc"+sessID)
+	pmcD.SetAny("aid", sessID)
+	pmcD.SetAny("savage", "scav"+sessID)
+	pmcD.Get("Info").SetAny("Nickname", nickname)
+	pmcD.Get("Info").SetAny("LowerNickname", strings.ToLower(nickname))
+	pmcD.Get("Info").SetAny("RegistrationDate", time.Now().Unix())
+	pmcD.Get("Info").Set("Voice", *database.GetDatabase().GetByPath("templates", "customization", voiceId, "_name"))
+	pmcD.Get("Stats").SetAny("SessionCounters", ast.NewObject([]ast.Pair{{Key: "Items", Value: ast.NewArray(nil)}}))
+	pmcD.Get("Customization").SetAny("Head", headId)
+	pmcD.Get("Health").SetAny("UpdateTime", time.Now().Unix())
+	pmcD.SetAny("Quests", ast.NewArray(nil))
+	pmcD.SetAny("RepeatableQuests", ast.NewArray(nil))
+	pmcD.SetAny("CarExtractCounts", ast.NewArray(nil))
+
+	return nil
+}
+
+func GenerateScavProfile(sessID string) {
 	// TODO
 }
 
-func (s *Svc) IsWipe(sessID string) bool {
-	p := s.GetProfile(sessID)
+func GetDefaultCounters() *ast.Node {
+	n, _ := sonic.Get([]byte(`
+{
+    "SessionCounters": {
+        "Items": []
+    },
+    "OverallCounters": {
+        "Items": []
+    }
+}`))
+	return &n
+}
+
+func IsWipe(sessID string) bool {
+	p := GetProfile(sessID)
 	if p == nil {
 		return false
 	}
@@ -281,24 +340,24 @@ func (s *Svc) IsWipe(sessID string) bool {
 	return w
 }
 
-func (s *Svc) FullPath(sessID string) string {
-	return filepath.Join(s.Config.Path, s.FullProfileFileName(sessID))
+func FullPath(sessID string) string {
+	return filepath.Join(GetSvc().Config.Path, FullProfileFileName(sessID))
 }
 
-func (s *Svc) FullProfileFileName(sessID string) string {
+func FullProfileFileName(sessID string) string {
 	return sessID + "." + ProfileFileExt
 }
 
-func (s *Svc) GetMiniProfile(sessID string) (*ast.Node, error) {
-	p := s.GetProfile(sessID)
+func GetMiniProfile(sessID string) (*ast.Node, error) {
+	p := GetProfile(sessID)
 	if p == nil {
 		return nil, errors.New(util.ErrGetMiniProfile)
 	}
 
-	info := s.GetProfileInfo(sessID)
+	info := GetProfileInfo(sessID)
 	username, _ := info.Get("username").String()
 
-	maxLevel, err := database.GetSvc().GetMaxLevel()
+	maxLevel, err := database.GetMaxLevel()
 	if err != nil {
 		return nil, errors.Wrap(err, util.ErrGetMiniProfile)
 	}
@@ -322,7 +381,7 @@ func (s *Svc) GetMiniProfile(sessID string) (*ast.Node, error) {
 
 	if !pmc.Get("Info").Exists() || !pmc.GetByPath("Info", "Level").Exists() {
 		n, err := sonic.GetFromString(
-			fmt.Sprintf(pbs, username, "unknown", "unknown", 0, 0, 0, 0, maxLevel, s.GetDefaultAkiData()))
+			fmt.Sprintf(pbs, username, "unknown", "unknown", 0, 0, 0, 0, maxLevel, GetDefaultAkiData()))
 		return &n, errors.Wrap(err, util.ErrGetMiniProfile)
 	}
 
@@ -333,19 +392,19 @@ func (s *Svc) GetMiniProfile(sessID string) (*ast.Node, error) {
 	currExp, _ := pmcInfo.GetByPath("Experience").Int64()
 	var prevExp int64
 	if currLvl > 0 {
-		prevExp, _ = s.GetExperience(int(currLvl))
+		prevExp, _ = GetExperience(int(currLvl))
 	}
-	nextLvl, _ := s.GetExperience(int(currLvl) + 1)
+	nextLvl, _ := GetExperience(int(currLvl) + 1)
 	n, err := sonic.GetFromString(
-		fmt.Sprintf(pbs, username, nickname, side, currLvl, currExp, prevExp, nextLvl, maxLevel, s.GetDefaultAkiData()))
+		fmt.Sprintf(pbs, username, nickname, side, currLvl, currExp, prevExp, nextLvl, maxLevel, GetDefaultAkiData()))
 	return &n, errors.Wrap(err, util.ErrGetMiniProfile)
 }
 
-func (s *Svc) GetAllMiniProfiles() (*ast.Node, error) {
+func GetAllMiniProfiles() (*ast.Node, error) {
 	ps := ast.NewArray([]ast.Node{})
 
-	for sessID, _ := range s.profiles {
-		mp, err := s.GetMiniProfile(sessID)
+	for sessID, _ := range GetSvc().profiles {
+		mp, err := GetMiniProfile(sessID)
 		if err != nil {
 			return nil, err
 		}
@@ -355,12 +414,12 @@ func (s *Svc) GetAllMiniProfiles() (*ast.Node, error) {
 	return &ps, nil
 }
 
-func (s *Svc) GetDefaultAkiData() string {
+func GetDefaultAkiData() string {
 	return fmt.Sprintf(`{"version":"%s"}`, util.ServerVersion)
 }
 
-func (s *Svc) GetExperience(lvl int) (int64, error) {
-	expTable, err := database.GetSvc().GetDatabase().GetByPath("globals", "config", "exp", "level", "exp_table").ArrayUseNode()
+func GetExperience(lvl int) (int64, error) {
+	expTable, err := database.GetDatabase().GetByPath("globals", "config", "exp", "level", "exp_table").ArrayUseNode()
 	if err != nil {
 		return 0, errors.Wrap(err, "Get experience fail")
 	}
@@ -375,13 +434,13 @@ func (s *Svc) GetExperience(lvl int) (int64, error) {
 	return exp, nil
 }
 
-func (s *Svc) RemoveProfile(sessID string) error {
-	if s.GetProfile(sessID) == nil {
+func RemoveProfile(sessID string) error {
+	if GetProfile(sessID) == nil {
 		return errors.New(util.ErrUserNotExist)
 	}
 
-	delete(s.profiles, sessID)
-	err := os.Remove(s.FullPath(sessID))
+	delete(GetSvc().profiles, sessID)
+	err := os.Remove(FullPath(sessID))
 	if err != nil {
 		return errors.Wrap(err, util.ErrRemoveProfile)
 	}

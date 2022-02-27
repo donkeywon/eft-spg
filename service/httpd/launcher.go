@@ -32,7 +32,7 @@ func (s *Svc) registerLauncherRouter() {
 }
 
 func (s *Svc) Connect(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
-	pe, err := database.GetSvc().GetProfileEditions()
+	pe, err := database.GetProfileEditions()
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (s *Svc) Login(sessID string, vars map[string]string, body *ast.Node, r *ht
 		return resp, errors.New(util2.ErrIllegalArg)
 	}
 
-	loginSessID, err := eft.GetSvc().Login(username)
+	loginSessID, err := eft.Login(username)
 	if err != nil {
 		s.Error("User login fail", zap.Error(err))
 	} else {
@@ -62,7 +62,7 @@ func (s *Svc) Login(sessID string, vars map[string]string, body *ast.Node, r *ht
 }
 
 func (s *Svc) Register(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
-	_, err := eft.GetSvc().Register(body)
+	_, err := eft.Register(body)
 	if err != nil {
 		return "FAILED", errors.Wrap(err, util2.ErrRegisterFail)
 	}
@@ -75,7 +75,7 @@ func (s *Svc) GetProfile(sessID string, vars map[string]string, body *ast.Node, 
 		return "", errors.New(util2.ErrIllegalArg)
 	}
 
-	_, p := profile.GetSvc().GetSessProfileByUsername(username)
+	_, p := profile.GetSessProfileByUsername(username)
 	if p == nil {
 		return "", errors.New(util2.ErrUserNotExist)
 	}
@@ -93,7 +93,7 @@ func (s *Svc) ChangeUsername(sessID string, vars map[string]string, body *ast.No
 		return "FAILED", errors.New(util2.ErrIllegalArg)
 	}
 
-	err = eft.GetSvc().ChangeUsername(old, newUn)
+	err = eft.ChangeUsername(old, newUn)
 	if err != nil {
 		return "FAILED", errors.Wrap(err, util2.ErrChangeUsername)
 	}
@@ -111,7 +111,7 @@ func (s *Svc) ChangePassword(sessID string, vars map[string]string, body *ast.No
 		return "FAILED", errors.New(util2.ErrIllegalArg)
 	}
 
-	err = eft.GetSvc().ChangePassword(username, newPw)
+	err = eft.ChangePassword(username, newPw)
 	if err != nil {
 		return "FAILED", errors.Wrap(err, util2.ErrChangeUsername)
 	}
@@ -129,7 +129,7 @@ func (s *Svc) Wipe(sessID string, vars map[string]string, body *ast.Node, r *htt
 		return "FAILED", errors.New(util2.ErrIllegalArg)
 	}
 
-	err = eft.GetSvc().Wipe(username, edition)
+	err = eft.Wipe(username, edition)
 	if err != nil {
 		return "FAILED", err
 	}
@@ -138,11 +138,11 @@ func (s *Svc) Wipe(sessID string, vars map[string]string, body *ast.Node, r *htt
 }
 
 func (s *Svc) GetMiniProfile(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return profile.GetSvc().GetMiniProfile(sessID)
+	return profile.GetMiniProfile(sessID)
 }
 
 func (s *Svc) GetAllMiniProfiles(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return profile.GetSvc().GetAllMiniProfiles()
+	return profile.GetAllMiniProfiles()
 }
 
 func (s *Svc) Ping(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
@@ -154,7 +154,7 @@ func (s *Svc) GetServerVersion(sessID string, vars map[string]string, body *ast.
 }
 
 func (s *Svc) RemoveProfile(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
-	err := profile.GetSvc().RemoveProfile(sessID)
+	err := profile.RemoveProfile(sessID)
 	if err != nil {
 		return "false", err
 	}
@@ -163,5 +163,5 @@ func (s *Svc) RemoveProfile(sessID string, vars map[string]string, body *ast.Nod
 }
 
 func (s *Svc) GetCompatibleTarkovVersion(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
-	return cfg.GetSvc().GetConfig().GetByPath("aki", "compatibleTarkovVersion").String()
+	return cfg.GetCfg().GetByPath("aki", "compatibleTarkovVersion").String()
 }

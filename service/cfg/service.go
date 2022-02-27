@@ -60,6 +60,6 @@ func (s *Svc) Shutdown() error {
 	return nil
 }
 
-func (s *Svc) GetConfig() *ast.Node {
-	return s.cfg
+func GetCfg() *ast.Node {
+	return svc.cfg
 }

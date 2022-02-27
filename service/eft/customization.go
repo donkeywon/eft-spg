@@ -6,20 +6,20 @@ import (
 	"github.com/bytedance/sonic/ast"
 )
 
-func (s *Svc) GetSuits(sessID string) *ast.Node {
+func GetSuits(sessID string) *ast.Node {
 	n := ast.NewObject([]ast.Pair{})
 
-	n.Set("_id", *profile.GetSvc().GetProfile(sessID).GetByPath("characters", "pmc", "_id"))
-	n.Set("suites", *profile.GetSvc().GetProfile(sessID).GetByPath("suits"))
+	n.Set("_id", *profile.GetProfile(sessID).GetByPath("characters", "pmc", "_id"))
+	n.Set("suites", *profile.GetProfile(sessID).GetByPath("suits"))
 	return &n
 }
 
-func (s *Svc) GetTraderSuits(sessID string, traderID string) *ast.Node {
+func GetTraderSuits(sessID string, traderID string) *ast.Node {
 	result := ast.NewArray([]ast.Node{})
 
-	pmcSide, _ := profile.GetSvc().GetPMCProfile(sessID).GetByPath("Info", "Side").String()
-	templates := database.GetSvc().GetDatabase().GetByPath("templates", "customization")
-	suitesN := database.GetSvc().GetDatabase().GetByPath("traders", traderID, "suits")
+	pmcSide, _ := profile.GetPMCProfile(sessID).GetByPath("Info", "Side").String()
+	templates := database.GetDatabase().GetByPath("templates", "customization")
+	suitesN := database.GetDatabase().GetByPath("traders", traderID, "suits")
 	if !suitesN.Exists() {
 		return &result
 	}
@@ -41,10 +41,10 @@ func (s *Svc) GetTraderSuits(sessID string, traderID string) *ast.Node {
 	return &result
 }
 
-func (s *Svc) BuyClothing() {
+func BuyClothing() {
 	// TODO
 }
 
-func (s *Svc) GetAllTraderSuits() {
+func GetAllTraderSuits() {
 	// TODO
 }

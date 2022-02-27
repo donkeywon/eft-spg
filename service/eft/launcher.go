@@ -12,8 +12,8 @@ import (
 	"go.uber.org/multierr"
 )
 
-func (s *Svc) Login(username string) (string, error) {
-	sessID, _ := profile.GetSvc().GetSessProfileByUsername(username)
+func Login(username string) (string, error) {
+	sessID, _ := profile.GetSessProfileByUsername(username)
 	if sessID == "" {
 		return "", errors.New(util.ErrUserNotExist)
 	}
@@ -21,7 +21,7 @@ func (s *Svc) Login(username string) (string, error) {
 	return sessID, nil
 }
 
-func (s *Svc) Register(info *ast.Node) (string, error) {
+func Register(info *ast.Node) (string, error) {
 	var username, password, edition string
 	username, err := info.Get("username").String()
 	password, err1 := info.Get("password").String()
@@ -31,21 +31,21 @@ func (s *Svc) Register(info *ast.Node) (string, error) {
 		return "", errors.Wrap(err, util.ErrIllegalArg)
 	}
 
-	et := database.GetSvc().GetProfileEditionsTemplate()
+	et := database.GetProfileEditionsTemplate()
 	if !et.Get(edition).Exists() {
 		return "", errors.New(util.ErrIllegalArg)
 	}
 
-	sessID, _ := profile.GetSvc().GetSessProfileByUsername(username)
+	sessID, _ := profile.GetSessProfileByUsername(username)
 	if sessID != "" {
 		return "", errors.New(util.ErrUserExist)
 	}
 
-	s.createAccount(username, password, edition)
+	createAccount(username, password, edition)
 	return "", nil
 }
 
-func (s *Svc) createAccount(username string, password string, edition string) {
+func createAccount(username string, password string, edition string) {
 	sessID := util.GenerateID()
 
 	info := fmt.Sprintf(`{
@@ -59,13 +59,13 @@ func (s *Svc) createAccount(username string, password string, edition string) {
 }`, sessID, username, password, edition)
 	p, _ := sonic.Get(util2.String2Bytes(info))
 
-	profile.GetSvc().SetProfile(sessID, &p)
-	profile.GetSvc().LoadProfile(sessID)
-	profile.GetSvc().SaveProfile(sessID)
+	profile.SetProfile(sessID, &p)
+	profile.LoadProfile(sessID)
+	profile.SaveProfile(sessID)
 }
 
-func (s *Svc) ChangeUsername(old string, new string) error {
-	_, p := profile.GetSvc().GetSessProfileByUsername(old)
+func ChangeUsername(old string, new string) error {
+	_, p := profile.GetSessProfileByUsername(old)
 	if p == nil {
 		return errors.New(util.ErrUserNotExist)
 	}
@@ -74,8 +74,8 @@ func (s *Svc) ChangeUsername(old string, new string) error {
 	return nil
 }
 
-func (s *Svc) ChangePassword(username string, new string) error {
-	_, p := profile.GetSvc().GetSessProfileByUsername(username)
+func ChangePassword(username string, new string) error {
+	_, p := profile.GetSessProfileByUsername(username)
 	if p == nil {
 		return errors.New(util.ErrUserNotExist)
 	}
@@ -84,13 +84,13 @@ func (s *Svc) ChangePassword(username string, new string) error {
 	return nil
 }
 
-func (s *Svc) Wipe(username string, edition string) error {
-	_, p := profile.GetSvc().GetSessProfileByUsername(username)
+func Wipe(username string, edition string) error {
+	_, p := profile.GetSessProfileByUsername(username)
 	if p == nil {
 		return errors.New(util.ErrUserNotExist)
 	}
 
-	et := database.GetSvc().GetProfileEditionsTemplate()
+	et := database.GetProfileEditionsTemplate()
 	if !et.Get(edition).Exists() {
 		return errors.New(util.ErrIllegalArg)
 	}

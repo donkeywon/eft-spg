@@ -143,16 +143,16 @@ func readDirToJson(bs []byte, path string) (int, error) {
 	return offset, nil
 }
 
-func (s *Svc) GetDatabase() *ast.Node {
-	return s.database
+func GetDatabase() *ast.Node {
+	return svc.database
 }
 
-func (s *Svc) GetProfileEditionsTemplate() *ast.Node {
-	return s.database.GetByPath("templates", "profiles")
+func GetProfileEditionsTemplate() *ast.Node {
+	return GetDatabase().GetByPath("templates", "profiles")
 }
 
-func (s *Svc) GetProfileEditions() ([]string, error) {
-	ps := s.GetProfileEditionsTemplate()
+func GetProfileEditions() ([]string, error) {
+	ps := GetProfileEditionsTemplate()
 
 	editions := make([]string, 0, 4)
 	err := ps.ForEach(func(path ast.Sequence, node *ast.Node) bool {
@@ -163,8 +163,8 @@ func (s *Svc) GetProfileEditions() ([]string, error) {
 	return editions, err
 }
 
-func (s *Svc) GetMaxLevel() (int, error) {
-	expTable, err := s.database.GetByPath("globals", "config", "exp", "level", "exp_table").Array()
+func GetMaxLevel() (int, error) {
+	expTable, err := GetDatabase().GetByPath("globals", "config", "exp", "level", "exp_table").Array()
 	if err != nil {
 		return 0, errors.Wrap(err, "Get max level fail")
 	}
