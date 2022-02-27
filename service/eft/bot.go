@@ -18,6 +18,12 @@ const (
 	SidePmcBear = "Bear"
 )
 
+var (
+	BotRoleBear, _ = cfg.GetCfg().GetByPath("bot", "pmc", "bearType").String()
+	BotRoleUsec, _ = cfg.GetCfg().GetByPath("bot", "pmc", "bearType").String()
+	BotRoleBoss, _ = cfg.GetCfg().GetByPath("bot", "bosses").Array()
+)
+
 func GetBotLimit(typ string) (int64, error) {
 	if typ == "" {
 		return 0, errors.New(util.ErrIllegalArg)
@@ -313,7 +319,7 @@ func generateSkills(skillsNode *ast.Node) ast.Node {
 					Value: ast.NewString(*path.Key),
 				}, {
 					Key:   "Progress",
-					Value: ast.NewAny(util.RandIntNode(skillsNode.GetByPath(typ, path.Key, "min"), skillsNode.GetByPath(typ, path.Key, "max"))),
+					Value: ast.NewNumber(string(util.RandIntNode(skillsNode.GetByPath(typ, path.Key, "min"), skillsNode.GetByPath(typ, path.Key, "max")))),
 				}}))
 
 				return true
@@ -329,6 +335,24 @@ func generateSkills(skillsNode *ast.Node) ast.Node {
 		Value: masteries,
 	}, {
 		Key:   "Points",
-		Value: ast.NewAny(0),
+		Value: ast.NewNumber("0"),
 	}})
+}
+
+func isBotPmc(botRole string) bool {
+	return strings.ToLower(BotRoleBear) == strings.ToLower(botRole) || strings.ToLower(BotRoleUsec) == strings.ToLower(botRole)
+}
+
+func isBotBoss(botRole string) bool {
+	for _, boss := range BotRoleBoss {
+		if strings.ToLower(boss.(string)) == strings.ToLower(botRole) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isBotFollower(botRole string) bool {
+	return strings.Index(botRole, "follower") == 0
 }

@@ -27,39 +27,145 @@
     "exUsec": 15
   },
   "bosses": ["bossbully", "bossgluhar", "bosskilla", "bosskojaniy", "bosssanitar", "bosstagilla"],
-  "durability":{
-    "pmcbot":{
-      "armor": {
-        "minPercent": 80
+  "durability":{ // Add custom bot types here, otherwise they will use the default values
+    "default":{
+      "armor":{
+        "maxDelta": 10,
+        "minDelta": 0
       },
       "weapon": {
-        "minPercent": 80
+        "lowestMax": 50,
+        "highestMax": 100,
+        "maxDelta": 10,
+        "minDelta": 0
+      }
+    },
+    "pmc": { // Sets bots that are designated PMCs by 'usecType' and 'bearType'
+      "armor": {
+        "lowestMaxPercent": 90,   // These two properties
+        "highestMaxPercent": 100, // are only for PMCs
+        "maxDelta": 10,
+        "minDelta": 0
+      },
+      "weapon": {
+        "lowestMax": 95,
+        "highestMax": 100,
+        "maxDelta": 5,
+        "minDelta": 0
+      }
+    },
+    "boss": { // Bosses are all grouped together
+      "armor": {
+        "maxDelta": 10,
+        "minDelta": 0
+      },
+      "weapon": {
+        "lowestMax": 80,
+        "highestMax": 100,
+        "maxDelta": 10,
+        "minDelta": 0
+      }
+    },
+    "follower": { // followers are all grouped together
+      "armor": {
+        "maxDelta": 10,
+        "minDelta": 0
+      },
+      "weapon": {
+        "lowestMax": 80,
+        "highestMax": 100,
+        "maxDelta": 10,
+        "minDelta": 0
+      }
+    },
+    "assault": {
+      "armor": {
+        "maxDelta": 10,
+        "minDelta": 0
+      },
+      "weapon": {
+        "lowestMax": 48,
+        "highestMax": 70,
+        "maxDelta": 10,
+        "minDelta": 0
+      }
+    },
+    "cursedassault": {
+      "armor": {
+        "maxDelta": 10,
+        "minDelta": 0
+      },
+      "weapon": {
+        "lowestMax": 50,
+        "highestMax": 70,
+        "maxDelta": 10,
+        "minDelta": 0
+      }
+    },
+    "marksman": {
+      "armor": {
+        "maxDelta": 10,
+        "minDelta": 0
+      },
+      "weapon": {
+        "lowestMax": 50,
+        "highestMax": 70,
+        "maxDelta": 10,
+        "minDelta": 0
+      }
+    },
+    "pmcbot":{
+      "armor": {
+        "maxDelta": 10,
+        "minDelta": 0
+      },
+      "weapon": {
+        "lowestMax": 80,
+        "highestMax": 100,
+        "maxDelta": 10,
+        "minDelta": 0
       }
     },
     "exusec":{
       "armor": {
-        "minPercent": 80
+        "maxDelta": 10,
+        "minDelta": 0
       },
       "weapon": {
-        "minPercent": 80
+        "lowestMax": 79,
+        "highestMax": 100,
+        "maxDelta": 10,
+        "minDelta": 0
       }
     },
-    "pmc": {
+    "sectantpriest": {
       "armor": {
-        "minPercent": 80
+        "maxDelta": 10,
+        "minDelta": 0
       },
       "weapon": {
-        "minPercent": 80
+        "lowestMax": 90,
+        "highestMax": 100,
+        "maxDelta": 10,
+        "minDelta": 0
       }
     },
-    "boss": {
+    "sectantwarrior": {
       "armor": {
-        "minPercent": 80
+        "maxDelta": 10,
+        "minDelta": 0
       },
       "weapon": {
-        "minPercent": 80
+        "lowestMax": 90,
+        "highestMax": 100,
+        "maxDelta": 10,
+        "minDelta": 0
       }
     }
+  },
+  "lootNValue": {
+    "scav": 3,
+    "pmc": 1.8
   },
   "pmc": {
     "dynamicLoot": {
@@ -68,7 +174,11 @@
         "5fca13ca637ee0341a484f46", // SJ9 TGLabs combat stimulant injector (Thermal Stim)
         "59f32c3b86f77472a31742f0", // usec dogtag
         "59f32bb586f774757e1e8442", // bear dogtag
-        "6087e570b998180e9f76dc24" // Superfors DB 2020 Dead Blow Hammer
+        "6087e570b998180e9f76dc24", // Superfors DB 2020 Dead Blow Hammer
+        "617aa4dd8166f034d57de9c5", // M18 Smoke Grenade
+        "5a2a57cfc4a2826c6e06d44a", // RDG-2B Smoke Grenade
+        "619256e5f8af2c1a4e1f5d92", // M7290 Flash Bang Grenade
+        "5a0c27731526d80618476ac4"  // Zarya Stun Grenade
       ],
       "spawnLimits": {
         "5c99f98d86f7745c314214b3": 1, // mechanical key
@@ -76,6 +186,8 @@
         "550aa4cd4bdc2dd8348b456c": 2, // silencer
         "55818add4bdc2d5b648b456f": 1, // assault scope
         "55818ad54bdc2ddc698b4569": 1, // reflex sight
+        "55818aeb4bdc2ddc698b456a": 1, // special scopes (thermals etc)
+        "55818ae44bdc2dde698b456c": 1, // optical scopes
         "55818af64bdc2d5b648b4570": 1, // foregrip
         "5448e54d4bdc2dcc718b4568": 1, // armor
         "5448f3a64bdc2d60728b456a": 2, // stims
@@ -84,12 +196,16 @@
         "55818b164bdc2ddc698b456c": 2, // tactical laser/light
         "5448bc234bdc2d3c308b4569": 2, // Magazine
         "543be5dd4bdc2deb348b4569": 2, // Money
-        "543be5cb4bdc2deb348b4568": 2 // AmmoBox
+        "543be5cb4bdc2deb348b4568": 2, // AmmoBox
+        "5485a8684bdc2da71d8b4567": 2, // Ammo
+        "5d650c3e815116009f6201d2": 2, // Fuel
+        "5448f39d4bdc2d0a728b4568": 2, // Medkit
+        "543be6564bdc2df4348b4568": 1  // Grenades
       },
       "moneyStackLimits": {
         "5449016a4bdc2d6f028b456f": 4000, // Rouble
         "5696686a4bdc2da3298b456a": 50, // USD
-        "569668774bdc2da2298b4568": 50 // Euro
+        "569668774bdc2da2298b4568": 50, // Euro
       }
     },
     "cartridgeBlacklist": [
@@ -138,11 +254,13 @@
     "chanceSameSideIsHostilePercent": 50,
     "usecType": "bosstest",
     "bearType": "test",
-    "maxLootTotalRub": 150000,
+    "maxBackpackLootTotalRub": 150000,
+    "maxPocketLootTotalRub": 50000,
+    "maxVestLootTotalRub": 50000,
     "types": {
-      "assault": 35,
-      "cursedAssault": 35,
-      "pmcBot": 35,
+      "assault": 25,
+      "cursedAssault": 25,
+      "pmcBot": 25,
       "exUsec": 10
     }
   },
