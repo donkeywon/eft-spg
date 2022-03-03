@@ -1,6 +1,7 @@
 package eft
 
 import (
+	"eft-spg/service/cfg"
 	"github.com/donkeywon/gtil/service"
 )
 
@@ -34,6 +35,7 @@ func (s *Svc) Name() string {
 }
 
 func (s *Svc) Open() error {
+	s.initVar()
 	return nil
 }
 
@@ -43,4 +45,15 @@ func (s *Svc) Close() error {
 
 func (s *Svc) Shutdown() error {
 	return nil
+}
+
+func (s *Svc) initVar() {
+	BotRoleBear, _ = cfg.GetCfg().GetByPath("bot", "pmc", "bearType").String()
+	BotRoleUsec, _ = cfg.GetCfg().GetByPath("bot", "pmc", "bearType").String()
+
+	bosses, _ := cfg.GetCfg().GetByPath("bot", "bosses").Array()
+	BotRoleBoss = make([]string, len(bosses))
+	for i, boss := range bosses {
+		BotRoleBoss[i] = boss.(string)
+	}
 }

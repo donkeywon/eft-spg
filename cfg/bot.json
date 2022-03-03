@@ -205,7 +205,7 @@
       "moneyStackLimits": {
         "5449016a4bdc2d6f028b456f": 4000, // Rouble
         "5696686a4bdc2da3298b456a": 50, // USD
-        "569668774bdc2da2298b4568": 50, // Euro
+        "569668774bdc2da2298b4568": 50 // Euro
       }
     },
     "cartridgeBlacklist": [

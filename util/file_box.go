@@ -46,7 +46,7 @@ func ReadJsonBox(box *packr.Box) (*ast.Node, error) {
 		if err != nil {
 			return err
 		}
-		_, err = n1.SetAny(fn, n2.(ast.Node))
+		_, err = n1.Set(fn, n2.(ast.Node))
 		if err != nil {
 			return err
 		}

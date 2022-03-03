@@ -1,20 +1,23 @@
 package database
 
 import (
-	"fmt"
-	"os"
+	"github.com/bytedance/sonic"
+	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestSvc_Open(t *testing.T) {
-	bs := make([]byte, 100)
+	path := "/Users/donkeywon/code/go/eft-spg/assets/database"
+	bs := make([]byte, 500000000, 500000000)
+	n, err := readDirToJson(bs, path)
+	assert.NoError(t, err)
 
-	f, _ := os.Open("/Users/donkeywon/code/go/eft-spg/assets/database/globals.json")
+	_, err = sonic.Get(bs[:n])
+	assert.NoError(t, err)
+	bs = nil
 
-	i, err := f.Read(bs)
-	fmt.Println(i)
-	fmt.Println(err)
-	fmt.Println(string(bs))
+	time.Sleep(time.Second * 100)
 }
 
 //func TestSvc_Open(t *testing.T) {

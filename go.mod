@@ -3,8 +3,8 @@ module eft-spg
 go 1.17
 
 require (
-	github.com/bytedance/sonic v1.1.0
-	github.com/donkeywon/gtil v0.2.0
+	github.com/bytedance/sonic v1.1.1
+	github.com/donkeywon/gtil v0.2.1
 	github.com/gobuffalo/packd v1.0.1
 	github.com/gobuffalo/packr/v2 v2.8.3
 	github.com/gorilla/mux v1.8.0
@@ -21,6 +21,7 @@ require (
 	github.com/chenzhuoyu/base64x v0.0.0-20211019084208-fb5309c8db06 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gobuffalo/logger v1.0.6 // indirect
+	github.com/huandu/go-clone v1.3.0
 	github.com/karrick/godirwalk v1.16.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/kr/text v0.2.0 // indirect

@@ -5,6 +5,7 @@ import (
 	"eft-spg/util"
 	"github.com/bytedance/sonic/ast"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -30,7 +31,7 @@ func (s *Svc) GetSettings(sessID string, vars map[string]string, body *ast.Node,
 
 func (s *Svc) GetGlobals(sessID string, vars map[string]string, body *ast.Node, r *http.Request) (interface{}, error) {
 	g := database.GetDatabase().Get("globals")
-	g.SetAny("time", time.Now().Unix())
+	g.Set("time", ast.NewString(strconv.Itoa(int(time.Now().Unix()))))
 	return g, nil
 }
 

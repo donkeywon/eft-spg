@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -287,19 +288,19 @@ func CreateProfile(sessID string, info *ast.Node) error {
 		RemoveProfile(sessID)
 	}
 
-	pmcD.SetAny("_id", "pmc"+sessID)
-	pmcD.SetAny("aid", sessID)
-	pmcD.SetAny("savage", "scav"+sessID)
-	pmcD.Get("Info").SetAny("Nickname", nickname)
-	pmcD.Get("Info").SetAny("LowerNickname", strings.ToLower(nickname))
-	pmcD.Get("Info").SetAny("RegistrationDate", time.Now().Unix())
+	pmcD.Set("_id", ast.NewString("pmc"+sessID))
+	pmcD.Set("aid", ast.NewString(sessID))
+	pmcD.Set("savage", ast.NewString("scav"+sessID))
+	pmcD.Get("Info").Set("Nickname", ast.NewString(nickname))
+	pmcD.Get("Info").Set("LowerNickname", ast.NewString(strings.ToLower(nickname)))
+	pmcD.Get("Info").Set("RegistrationDate", ast.NewNumber(strconv.Itoa(int(time.Now().Unix()))))
 	pmcD.Get("Info").Set("Voice", *database.GetDatabase().GetByPath("templates", "customization", voiceId, "_name"))
-	pmcD.Get("Stats").SetAny("SessionCounters", ast.NewObject([]ast.Pair{{Key: "Items", Value: ast.NewArray(nil)}}))
-	pmcD.Get("Customization").SetAny("Head", headId)
-	pmcD.Get("Health").SetAny("UpdateTime", time.Now().Unix())
-	pmcD.SetAny("Quests", ast.NewArray(nil))
-	pmcD.SetAny("RepeatableQuests", ast.NewArray(nil))
-	pmcD.SetAny("CarExtractCounts", ast.NewArray(nil))
+	pmcD.Get("Stats").Set("SessionCounters", ast.NewObject([]ast.Pair{{Key: "Items", Value: ast.NewArray(nil)}}))
+	pmcD.Get("Customization").Set("Head", ast.NewString(headId))
+	pmcD.Get("Health").Set("UpdateTime", ast.NewNumber(strconv.Itoa(int(time.Now().Unix()))))
+	pmcD.Set("Quests", ast.NewArray(nil))
+	pmcD.Set("RepeatableQuests", ast.NewArray(nil))
+	pmcD.Set("CarExtractCounts", ast.NewArray(nil))
 
 	return nil
 }

@@ -6,9 +6,11 @@ import (
 	"eft-spg/util"
 	"github.com/bytedance/sonic"
 	"github.com/bytedance/sonic/ast"
+	"github.com/huandu/go-clone"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"math/rand"
+	"strconv"
 	"strings"
 )
 
@@ -19,9 +21,9 @@ const (
 )
 
 var (
-	BotRoleBear, _ = cfg.GetCfg().GetByPath("bot", "pmc", "bearType").String()
-	BotRoleUsec, _ = cfg.GetCfg().GetByPath("bot", "pmc", "bearType").String()
-	BotRoleBoss, _ = cfg.GetCfg().GetByPath("bot", "bosses").Array()
+	BotRoleBear string
+	BotRoleUsec string
+	BotRoleBoss []string
 )
 
 func GetBotLimit(typ string) (int64, error) {
@@ -52,8 +54,8 @@ func GetBotDifficulty(typ string, difficulty string) (*ast.Node, error) {
 	case bearType, usecType:
 		difficultySettings := GetPmcDifficultySettings(typ, difficulty)
 		if rand.Int63n(100) < chanceSameSideIsHostilePercent {
-			difficultySettings.Get("Mind").SetAny("DEFAULT_ENEMY_USEC", true)
-			difficultySettings.Get("Mind").SetAny("DEFAULT_ENEMY_BEAR", true)
+			difficultySettings.Get("Mind").Set("DEFAULT_ENEMY_USEC", ast.NewBool(true))
+			difficultySettings.Get("Mind").Set("DEFAULT_ENEMY_BEAR", ast.NewBool(true))
 		}
 		return difficultySettings, nil
 	default:
@@ -116,9 +118,9 @@ func Generate(info *ast.Node, playerScav bool) *ast.Node {
 			}
 
 			cd, _ := condition.Get("Difficulty").String()
-			bot := database.GetDatabase().GetByPath("bots", "base")
+			bot := clone.Clone(database.GetDatabase().GetByPath("bots", "base")).(*ast.Node)
 			if isPmc {
-				bot.GetByPath("Info", "Settings").SetAny("BotDifficulty", GetPmcDifficulty(cd))
+				bot.GetByPath("Info", "Settings").Set("BotDifficulty", ast.NewString(GetPmcDifficulty(cd)))
 
 				if side == SidePmcUsec {
 					role, _ = cfg.GetCfg().GetByPath("bot", "pmc", "usecType").String()
@@ -126,14 +128,14 @@ func Generate(info *ast.Node, playerScav bool) *ast.Node {
 					role, _ = cfg.GetCfg().GetByPath("bot", "pmc", "bearType").String()
 				}
 			} else {
-				bot.GetByPath("Info", "Settings").SetAny("BotDifficulty", cd)
+				bot.GetByPath("Info", "Settings").Set("BotDifficulty", ast.NewString(cd))
 			}
 
-			bot.GetByPath("Info", "Settings").SetAny("Role", role)
+			bot.GetByPath("Info", "Settings").Set("Role", ast.NewString(role))
 			if isPmc {
-				bot.Get("Info").SetAny("Side", side)
+				bot.Get("Info").Set("Side", ast.NewString(side))
 			} else {
-				bot.Get("Info").SetAny("Side", SideSavage)
+				bot.Get("Info").Set("Side", ast.NewString(SideSavage))
 			}
 
 			// TODO generateBot
@@ -148,6 +150,7 @@ func Generate(info *ast.Node, playerScav bool) *ast.Node {
 }
 
 func generateBot(bot *ast.Node, role string, isPmc bool) {
+	// need to clone ?
 	roleBot := database.GetDatabase().GetByPath("bots", "types", strings.ToLower(role))
 	minLvl, _ := roleBot.GetByPath("experience", "level", "min").Int64()
 	maxLvl, _ := roleBot.GetByPath("experience", "level", "max").Int64()
@@ -167,19 +170,19 @@ func generateBot(bot *ast.Node, role string, isPmc bool) {
 		name += " " + role
 	}
 
-	bot.Get("Info").SetAny("Nickname", name)
+	bot.Get("Info").Set("Nickname", ast.NewString(name))
 
 	if !ChristmasEventEnabled() {
 		for _, n := range []*ast.Node{roleBot.GetByPath("Inventory", "equipment"), roleBot.GetByPath("Inventory", "items")} {
 			n.ForEach(func(path ast.Sequence, node *ast.Node) bool {
-				m, _ := node.Map()
-				for k, _ := range m {
-					if ItemIsChristmasRelated(k) {
-						delete(m, k)
+				node.ForEach(func(path ast.Sequence, node *ast.Node) bool {
+					id, _ := node.String()
+					if ItemIsChristmasRelated(id) {
+						node.UnsetByIndex(path.Index)
 					}
-				}
 
-				n.SetAny(*path.Key, m)
+					return true
+				})
 
 				return true
 			})
@@ -192,11 +195,11 @@ func generateBot(bot *ast.Node, role string, isPmc bool) {
 	voices, _ := roleBot.GetByPath("appearance", "voice").Array()
 	side, _ := bot.GetByPath("Info", "Side").String()
 
-	bot.Get("Info").SetAny("Experience", exp)
-	bot.Get("Info").SetAny("Level", lvl)
-	bot.GetByPath("Info", "Settings").SetAny("Experience", util.RandInt(int(minRewardExp), int(maxRewardExp)))
+	bot.Get("Info").Set("Experience", ast.NewNumber(string(exp)))
+	bot.Get("Info").Set("Level", ast.NewNumber(string(lvl)))
+	bot.GetByPath("Info", "Settings").Set("Experience", ast.NewNumber(string(util.RandInt(int(minRewardExp), int(maxRewardExp)))))
 	bot.GetByPath("Info", "Settings").Set("StandingForKill", *roleBot.GetByPath("experience", "standingForKill"))
-	bot.GetByPath("Info").SetAny("Voice", util.RandChoose(voices))
+	bot.GetByPath("Info").Set("Voice", ast.NewString(util.RandChoose(voices).(string)))
 	bot.Set("Health", generateHealth(roleBot.Get("health"), side == SideSavage))
 	bot.Set("Skills", generateSkills(roleBot.Get("skills")))
 	for _, t := range []string{"Head", "Body", "Feet", "Hands"} {
@@ -294,13 +297,13 @@ func generateHealth(health *ast.Node, playerScav bool) ast.Node {
 }`))
 
 	for _, t := range []string{"Hydration", "Energy", "Temperature"} {
-		n.Get(t).SetAny("Current", util.RandIntNode(health.GetByPath(t, "min"), health.GetByPath(t, "max")))
+		n.Get(t).Set("Current", ast.NewNumber(strconv.Itoa(util.RandIntNode(health.GetByPath(t, "min"), health.GetByPath(t, "max")))))
 		n.Get(t).Set("Maximum", *health.GetByPath(t, "max"))
 	}
 
 	bp := n.Get("BodyParts")
 	for _, t := range []string{"Head", "Chest", "Stomach", "LeftArm", "RightArm", "LeftLeg", "RightLeg"} {
-		bp.GetByPath(t, "Health").SetAny("Current", util.RandIntNode(bodyParts.GetByPath(t, "min"), bodyParts.GetByPath(t, "max")))
+		bp.GetByPath(t, "Health").Set("Current", ast.NewNumber(strconv.Itoa(util.RandIntNode(bodyParts.GetByPath(t, "min"), bodyParts.GetByPath(t, "max")))))
 		bp.GetByPath(t, "Health").Set("Maximum", *bodyParts.GetByPath("Head", "max"))
 	}
 
@@ -345,7 +348,7 @@ func isBotPmc(botRole string) bool {
 
 func isBotBoss(botRole string) bool {
 	for _, boss := range BotRoleBoss {
-		if strings.ToLower(boss.(string)) == strings.ToLower(botRole) {
+		if strings.ToLower(boss) == strings.ToLower(botRole) {
 			return true
 		}
 	}
