@@ -4,8 +4,6 @@ import (
 	"eft-spg/service/cfg"
 	"eft-spg/service/database"
 	"eft-spg/util"
-	"fmt"
-	"github.com/bytedance/sonic"
 	"github.com/bytedance/sonic/ast"
 	"go.uber.org/zap"
 	"sort"
@@ -13,41 +11,78 @@ import (
 )
 
 const (
-	EquipmentSlotHeadwear            = "Headwear"
-	EquipmentSlotEarpiece            = "Earpiece"
-	EquipmentSlotFaceCover           = "FaceCover"
-	EquipmentSlotArmorVest           = "ArmorVest"
-	EquipmentSlotEyewear             = "Eyewear"
-	EquipmentSlotArmBand             = "ArmBand"
-	EquipmentSlotTacticalVest        = "TacticalVest"
-	EquipmentSlotPockets             = "Pockets"
-	EquipmentSlotBackpack            = "Backpack"
-	EquipmentSlotSecuredContainer    = "SecuredContainer"
-	EquipmentSlotFirstPrimaryWeapon  = "FirstPrimaryWeapon"
-	EquipmentSlotSecondPrimaryWeapon = "SecondPrimaryWeapon"
-	EquipmentSlotHolster             = "Holster"
-	EquipmentSlotScabbard            = "Scabbard"
+	EquipSlotHeadwear            = "Headwear"
+	EquipSlotEarpiece            = "Earpiece"
+	EquipSlotFaceCover           = "FaceCover"
+	EquipSlotArmorVest           = "ArmorVest"
+	EquipSlotEyewear             = "Eyewear"
+	EquipSlotArmBand             = "ArmBand"
+	EquipSlotTacticalVest        = "TacticalVest"
+	EquipSlotPockets             = "Pockets"
+	EquipSlotBackpack            = "Backpack"
+	EquipSlotSecuredContainer    = "SecuredContainer"
+	EquipSlotFirstPrimaryWeapon  = "FirstPrimaryWeapon"
+	EquipSlotSecondPrimaryWeapon = "SecondPrimaryWeapon"
+	EquipSlotHolster             = "Holster"
+	EquipSlotScabbard            = "Scabbard"
 )
 
-func generateInventory(tmplIvt *ast.Node, equipmentChances *ast.Node, generation *ast.Node, botRole string, isPmc bool) {
+var excludedSlotes = map[string]string{
+	EquipSlotFirstPrimaryWeapon:  EquipSlotFirstPrimaryWeapon,
+	EquipSlotSecondPrimaryWeapon: EquipSlotSecondPrimaryWeapon,
+	EquipSlotHolster:             EquipSlotHolster,
+	EquipSlotArmorVest:           EquipSlotArmorVest,
+}
+
+func generateInventory(tmplIvt *ast.Node, equipChances *ast.Node, generation *ast.Node, botRole string, isPmc bool) {
+	// Generate base inventory with no items
 	ivtBase := generateInventoryBase()
-	ivtBase.Get("")
 
-	excludedSlotes := map[string]string{
-		EquipmentSlotFirstPrimaryWeapon:  EquipmentSlotFirstPrimaryWeapon,
-		EquipmentSlotSecondPrimaryWeapon: EquipmentSlotSecondPrimaryWeapon,
-		EquipmentSlotHolster:             EquipmentSlotHolster,
-		EquipmentSlotArmorVest:           EquipmentSlotArmorVest,
-	}
+	// Go over all defined equipment slots and generate an item for each of them
 
-	tmplIvt.Get("equipment").ForEach(func(path ast.Sequence, node *ast.Node) bool {
-		if excludedSlotes[*path.Key] != "" {
-			return true
+	tmplIvt.Get("equipment").ForEach(func(path ast.Sequence, equip *ast.Node) bool {
+		// Weapons have special generation and will be generated seperately; ArmorVest should be generated after TactivalVest
+		equipSlot := *path.Key
+		if excludedSlotes[equipSlot] == "" {
+			generateEquipment(ivtBase, equipSlot, equip, tmplIvt.Get("mods"), equipChances, botRole)
 		}
-
-		// TODO generateEquipment
 		return true
 	})
+
+	// ArmorVest is generated afterwards to ensure that TacticalVest is always first, in case it is incompatible
+	generateEquipment(ivtBase, EquipSlotArmorVest, tmplIvt.GetByPath("equipment", "ArmorVest"), tmplIvt.Get("mods"), equipChances, botRole)
+
+	// Roll weapon spawns and generate a weapon for each roll that passed
+	firstPrimaryWeaponChance, _ := equipChances.GetByPath("equipment", EquipSlotFirstPrimaryWeapon).Int64()
+	secondPrimaryWeaponChance, _ := equipChances.GetByPath("equipment", EquipSlotSecondPrimaryWeapon).Int64()
+	holsterChance, _ := equipChances.GetByPath("equipment", EquipSlotHolster).Int64()
+	shouldSpawnPrimary := util.RandInt(0, 100) <= int(firstPrimaryWeaponChance)
+	shouldSpawnSecond := false
+	if shouldSpawnPrimary {
+		// only roll for a chance at secondary if primary roll was successful
+		shouldSpawnSecond = util.RandInt(0, 100) <= int(secondPrimaryWeaponChance)
+	}
+	shouldSpawnHolster := true
+	if shouldSpawnPrimary {
+		// roll for an extra pistol, unless primary roll failed - in that case, pistol is guaranteed
+		shouldSpawnHolster = util.RandInt(0, 100) <= int(holsterChance)
+	}
+
+	primarySpawn := ast.NewObject(nil)
+	primarySpawn.Set("slot", ast.NewString(EquipSlotFirstPrimaryWeapon))
+	primarySpawn.Set("shouldSpawn", ast.NewBool(shouldSpawnPrimary))
+	secondSpawn := ast.NewObject(nil)
+	secondSpawn.Set("slot", ast.NewString(EquipSlotSecondPrimaryWeapon))
+	secondSpawn.Set("shouldSpawn", ast.NewBool(shouldSpawnSecond))
+	holsterSpawn := ast.NewObject(nil)
+	holsterSpawn.Set("slot", ast.NewString(EquipSlotHolster))
+	holsterSpawn.Set("shouldSpawn", ast.NewBool(shouldSpawnHolster))
+	//weaponSlotSpawns := ast.NewArray([]ast.Node{primarySpawn, secondSpawn, holsterSpawn})
+	// TODO generateWeapon
+}
+
+func generateWeapon() {
+
 }
 
 func generateEquipment(ivtBase *ast.Node, equipSlot string, equipPool *ast.Node, modPool *ast.Node, spawnChances *ast.Node, botRole string) *ast.Node {
@@ -55,7 +90,7 @@ func generateEquipment(ivtBase *ast.Node, equipSlot string, equipPool *ast.Node,
 	items := &it
 
 	spawnChance := int64(100)
-	if equipSlot != EquipmentSlotPockets && equipSlot != EquipmentSlotSecuredContainer {
+	if equipSlot != EquipSlotPockets && equipSlot != EquipSlotSecuredContainer {
 		if !spawnChances.GetByPath("equipment", equipSlot).Exists() {
 			return items
 		}
@@ -83,23 +118,16 @@ func generateEquipment(ivtBase *ast.Node, equipSlot string, equipPool *ast.Node,
 	}
 
 	if isItemIncompatibleWithCurrentItem(ivtBase.GetByPath("inventory", "items"), equipItemTpl, equipSlot) {
+		// Bad luck - randomly picked item was not compatible with current gear
 		return items
 	}
 
 	id := util.GenerateID()
-	item := ast.NewObject([]ast.Pair{{
-		Key:   "_id",
-		Value: ast.NewString(id),
-	}, {
-		Key:   "_tpl",
-		Value: ast.NewString(equipItemTpl),
-	}, {
-		Key:   "parentId",
-		Value: *ivtBase.Get("equipment"),
-	}, {
-		Key:   "slotId",
-		Value: ast.NewString(equipSlot),
-	}})
+	item := ast.NewObject(nil)
+	item.Set("_id", ast.NewString(id))
+	item.Set("_tpl", ast.NewString(equipItemTpl))
+	item.Set("parentId", *ivtBase.Get("equipment"))
+	item.Set("slotId", ast.NewString(equipSlot))
 
 	extraPropsForItem := generateExtraPropertiesForItem(itemTpl, botRole)
 	extraPropsForItem.ForEach(func(path ast.Sequence, node *ast.Node) bool {
@@ -113,6 +141,11 @@ func generateEquipment(ivtBase *ast.Node, equipSlot string, equipPool *ast.Node,
 			items = generateModsForItem(items, modPool, id, itemTpl, spawnChances.Get("mods"), false)
 			return false
 		}
+		return true
+	})
+
+	items.ForEach(func(path ast.Sequence, i *ast.Node) bool {
+		ivtBase.Get("items").Add(*i)
 		return true
 	})
 
@@ -194,7 +227,9 @@ func generateModsForItem(items *ast.Node, modPool *ast.Node, parentID string, pa
 			return true
 		}
 
+		// Filter blacklisted cartridges
 		if isPmc && ammoContainers[modSlot] == true {
+			// Array includes mod_magazine which isnt a cartridge, but we need to filter the other 4 items
 			itemModPoolModSlot := itemModPool.Get(modSlot)
 			itemModPoolModSlot.ForEach(func(path ast.Sequence, node *ast.Node) bool {
 				id, _ := node.String()
@@ -261,12 +296,104 @@ func generateModsForItem(items *ast.Node, modPool *ast.Node, parentID string, pa
 			return true
 		}
 
-		// TODO
+		// TODO: check if weapon already has sight
+		// 'sight' 550aa4154bdc2dd8348b456b 2x parents down
+		parentItemID, _ := modTpl.Get("_parent").String()
+		parentItem := database.GetDatabase().GetByPath("templates", "items", parentItemID)
+		parentParentItemID, _ := parentItem.Get("_parent").String()
+		if parentItemID == "550aa4154bdc2dd8348b456b" || parentParentItemID == "550aa4154bdc2dd8348b456b" {
+			// TODO, check if another sight is already on gun AND isnt a side-mounted sight
+			// if weapon has sight already, skip
+		}
 
+		modID := util.GenerateID()
+		item := ast.NewObject(nil)
+		item.Set("_id", ast.NewString(modID))
+		item.Set("_tpl", ast.NewString(modTplID))
+		item.Set("parentId", ast.NewString(parentID))
+		item.Set("slotId", ast.NewString(modSlot))
+		extraProps := generateExtraPropertiesForItem(modTpl, "")
+		extraProps.ForEach(func(path ast.Sequence, node *ast.Node) bool {
+			item.Set(*path.Key, *node)
+			return true
+		})
+		items.Add(item)
+
+		// I first thought we could use the recursive generateModsForItems as previously for cylinder magazines.
+		// However, the recurse doesnt go over the slots of the parent mod but over the modPool which is given by the bot config
+		// where we decided to keep cartridges instead of camoras. And since a CylinderMagazine only has one cartridge entry and
+		// this entry is not to be filled, we need a special handling for the CylinderMagazine
+		parentItemName, _ := parentItem.Get("_name").String()
+		if parentItemName == "CylinderMagazine" {
+			// we don't have child mods, we need to create the camoras for the magazines instead
+			fillCamora(items, modPool, modID, modTpl)
+		} else {
+			modPool.ForEach(func(path ast.Sequence, node *ast.Node) bool {
+				if *path.Key == modTplID {
+					generateModsForItem(items, modPool, modID, modTpl, modSpawnChances, false)
+					return false
+				}
+
+				return true
+			})
+		}
 		return true
 	})
 
-	return nil
+	return items
+}
+
+/**
+ * With the shotgun revolver (60db29ce99594040e04c4a27) 12.12 introduced CylinderMagazines.
+ * Those magazines (e.g. 60dc519adf4c47305f6d410d) have a "Cartridges" entry with a _max_count=0.
+ * Ammo is not put into the magazine directly but assigned to the magazine's slots: The "camora_xxx" slots.
+ * This function is a helper called by generateModsForItem for mods with parent type "CylinderMagazine"
+ *
+ * @param items               The items where the CylinderMagazine's camora are appended to
+ * @param modPool             modPool which should include available cartrigdes
+ * @param parentId            The CylinderMagazine's UID
+ * @param parentTemplate      The CylinderMagazine's template
+ */
+func fillCamora(items *ast.Node, modPool *ast.Node, parentID string, parentTpl *ast.Node) {
+	parentTplID, _ := parentTpl.GetByPath("_id").String()
+	itemModPool := modPool.Get(parentTplID)
+
+	modSlot := "cartridges"
+	if !itemModPool.Get(modSlot).Exists() {
+		svc.Error("itemPool does not contain cartridges for a CylinderMagazine. Filling of camoras cancelled.", zap.String("parentTplID", parentTplID))
+		return
+	}
+
+	modTplID := ""
+	found := false
+	itemModTpls, _ := itemModPool.Get(modSlot).Array()
+	for len(itemModTpls) > 0 {
+		randIdx := util.RandInt(0, len(itemModTpls))
+		modTplID = itemModTpls[randIdx].(string)
+		if !isItemIncompatibleWithCurrentItem(items, modTplID, modSlot) {
+			found = true
+			break
+		}
+
+		itemModTpls = append(itemModTpls[:randIdx], itemModTpls[randIdx+1:]...)
+	}
+
+	if !found {
+		svc.Error("No compatible ammo found. Filling of camoras cancelled.", zap.String("modSlot", modSlot))
+		return
+	}
+
+	parentTpl.GetByPath("_props", "Slots").ForEach(func(path ast.Sequence, slot *ast.Node) bool {
+		modSlot, _ = slot.Get("_name").String()
+		modID := util.GenerateID()
+		item := ast.NewObject(nil)
+		item.Set("_id", ast.NewString(modID))
+		item.Set("_tpl", ast.NewString(modTplID))
+		item.Set("parentId", ast.NewString(parentID))
+		item.Set("slotId", ast.NewString(modSlot))
+		items.Add(item)
+		return true
+	})
 }
 
 type sortModArr []string
@@ -370,7 +497,7 @@ func generateExtraPropertiesForItem(itemTpl *ast.Node, botRole string) ast.Node 
 	}
 }
 
-func generateInventoryBase() ast.Node {
+func generateInventoryBase() *ast.Node {
 	equipID := util.GenerateID()
 	equipTpl := "55d7217a4bdc2d86028b456d"
 
@@ -386,37 +513,35 @@ func generateInventoryBase() ast.Node {
 	sortingTableID := util.GenerateID()
 	sortingTableTpl := "602543c13fee350cd564d032"
 
-	n, _ := sonic.Get([]byte(fmt.Sprintf(`{
-"items": [
-    {
-        "_id": %s,
-        "_tpl": %s
-    },
-    {
-        "_id": %s,
-        "_tpl": %s
-    },
-    {
-        "_id": %s,
-        "_tpl": %s
-    },
-    {
-        "_id": %s,
-        "_tpl": %s
-    },
-    {
-        "_id": %s,
-        "_tpl": %s
-    }
-],
-"equipment": %s,
-"stash": %s,
-"questRaidItems": %s,
-"questStashItems": %s,
-"sortingTable": %s,
-"fastPanel": {}
-}`, equipID, equipTpl, stashID, stashTpl, questRaidItemID, questRaidItemTpl, questStashItemsID, questStashItemsTpl,
-		sortingTableID, sortingTableTpl, equipID, stashID, questRaidItemID, questStashItemsID, sortingTableID)))
+	items := ast.NewArray(nil)
+	for _, group := range [][]string{
+		{equipID, equipTpl},
+		{stashID, stashTpl},
+		{questRaidItemID, questRaidItemTpl},
+		{questStashItemsID, questStashItemsTpl},
+		{sortingTableID, sortingTableTpl},
+	} {
+		items.Add(
+			ast.NewObject([]ast.Pair{
+				{
+					Key:   "_id",
+					Value: ast.NewString(group[0]),
+				},
+				{
+					Key:   "_tpl",
+					Value: ast.NewString(group[1]),
+				},
+			}))
+	}
 
-	return n
+	ivtBase := ast.NewObject(nil)
+	ivtBase.Set("items", items)
+	ivtBase.Set("equipment", ast.NewString(equipID))
+	ivtBase.Set("stash", ast.NewString(stashID))
+	ivtBase.Set("questRaidItems", ast.NewString(questRaidItemID))
+	ivtBase.Set("questStashItems", ast.NewString(questStashItemsID))
+	ivtBase.Set("sortingTable", ast.NewString(sortingTableID))
+	ivtBase.Set("fastPanel", ast.NewObject(nil))
+
+	return &ivtBase
 }

@@ -7,6 +7,7 @@ import (
 )
 
 func isItemIncompatibleWithCurrentItem(items *ast.Node, tplIDToCheck string, equSlot string) bool {
+	// TODO: Can probably be optimized to cache itemTemplates as items are added to inventory
 	itemTpls := ast.NewArray(nil)
 	items.ForEach(func(path ast.Sequence, item *ast.Node) bool {
 		tplID, _ := item.Get("_tpl").String()
@@ -19,6 +20,7 @@ func isItemIncompatibleWithCurrentItem(items *ast.Node, tplIDToCheck string, equ
 
 	tplToCheck := database.GetDatabase().GetByPath("templates", "items", tplIDToCheck)
 
+	// Check if any of the current inventory templates have the incoming item defined as incompatible
 	curIvtCheck := false
 	itemTpls.ForEach(func(path ast.Sequence, itemTpl *ast.Node) bool {
 		blockEquSlot := false
@@ -35,6 +37,7 @@ func isItemIncompatibleWithCurrentItem(items *ast.Node, tplIDToCheck string, equ
 		return true
 	})
 
+	// Check if the incoming item has any inventory items defined as incompatible
 	itemCheck := false
 	items.ForEach(func(path ast.Sequence, item *ast.Node) bool {
 		itemSlotID, _ := item.Get("slotId").String()

@@ -122,6 +122,7 @@ func Generate(info *ast.Node, playerScav bool) *ast.Node {
 			if isPmc {
 				bot.GetByPath("Info", "Settings").Set("BotDifficulty", ast.NewString(GetPmcDifficulty(cd)))
 
+				// Get botRole back to its intended type
 				if side == SidePmcUsec {
 					role, _ = cfg.GetCfg().GetByPath("bot", "pmc", "usecType").String()
 				} else if side == SidePmcBear {
@@ -132,6 +133,7 @@ func Generate(info *ast.Node, playerScav bool) *ast.Node {
 			}
 
 			bot.GetByPath("Info", "Settings").Set("Role", ast.NewString(role))
+			// Set bot role to usec/bear so we can generate bot gear with corrisponding json
 			if isPmc {
 				bot.Get("Info").Set("Side", ast.NewString(side))
 			} else {
