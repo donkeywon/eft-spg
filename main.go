@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"eft-spg/cmd"
+	"fmt"
 	"github.com/donkeywon/gtil/logger"
 	"github.com/donkeywon/gtil/logger/core"
 	"github.com/donkeywon/gtil/service"
+	"github.com/traefik/yaegi/interp"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
@@ -40,6 +42,20 @@ func main() {
 	}
 
 	l.Info("Start success")
+
+	src, _ := ioutil.ReadFile("./mod/mod.go")
+	itp := interp.New(interp.Options{})
+	_, err = itp.Eval(string(src))
+	if err != nil {
+		panic(err)
+	}
+
+	gv, err := itp.Eval("mod.GetValue")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(gv.Interface().(func() string)())
 
 	signalCh := make(chan os.Signal)
 	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)

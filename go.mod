@@ -1,4 +1,4 @@
-module eft-spg
+module github.com/donkeywon/eft-spg
 
 go 1.17
 
@@ -8,20 +8,22 @@ require (
 	github.com/gobuffalo/packd v1.0.1
 	github.com/gobuffalo/packr/v2 v2.8.3
 	github.com/gorilla/mux v1.8.0
+	github.com/huandu/go-clone v1.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.0
+	github.com/traefik/yaegi v0.11.2
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.21.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
 //replace github.com/donkeywon/gtil v0.1.6 => D:/workspace/code/go/gtil
+replace github.com/bytedance/sonic v1.1.1 => /Users/donkeywon/code/go/sonic
 
 require (
 	github.com/chenzhuoyu/base64x v0.0.0-20211019084208-fb5309c8db06 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gobuffalo/logger v1.0.6 // indirect
-	github.com/huandu/go-clone v1.3.0
 	github.com/karrick/godirwalk v1.16.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/kr/text v0.2.0 // indirect
