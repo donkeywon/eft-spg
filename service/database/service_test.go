@@ -92,7 +92,7 @@ func TestSvc_Open(t *testing.T) {
 //}
 
 //import (
-//	"eft-spg/util"
+//	"github.com/donkeywon/eft-spg/util"
 //	"fmt"
 //	"github.com/buger/jsonparser"
 //	util2 "github.com/donkeywon/gtil/util"

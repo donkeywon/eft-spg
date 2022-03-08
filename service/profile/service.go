@@ -1,12 +1,12 @@
 package profile
 
 import (
-	"eft-spg/service/database"
-	"eft-spg/service/profile/hook"
-	"eft-spg/util"
 	"fmt"
 	"github.com/bytedance/sonic"
 	"github.com/bytedance/sonic/ast"
+	"github.com/donkeywon/eft-spg/service/database"
+	"github.com/donkeywon/eft-spg/service/profile/hook"
+	"github.com/donkeywon/eft-spg/util"
 	"github.com/donkeywon/gtil/service"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"

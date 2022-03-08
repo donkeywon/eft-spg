@@ -1,13 +1,13 @@
 package httpd
 
 import (
-	"eft-spg/service/cfg"
-	"eft-spg/service/database"
-	"eft-spg/service/eft"
-	"eft-spg/service/profile"
-	util2 "eft-spg/util"
 	"fmt"
 	"github.com/bytedance/sonic/ast"
+	"github.com/donkeywon/eft-spg/service/cfg"
+	"github.com/donkeywon/eft-spg/service/database"
+	"github.com/donkeywon/eft-spg/service/eft"
+	"github.com/donkeywon/eft-spg/service/profile"
+	util2 "github.com/donkeywon/eft-spg/util"
 	"github.com/donkeywon/gtil/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"

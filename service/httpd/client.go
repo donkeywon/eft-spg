@@ -1,9 +1,9 @@
 package httpd
 
 import (
-	"eft-spg/service/database"
-	"eft-spg/util"
 	"github.com/bytedance/sonic/ast"
+	"github.com/donkeywon/eft-spg/service/database"
+	"github.com/donkeywon/eft-spg/util"
 	"net/http"
 	"strconv"
 	"time"

@@ -1,11 +1,11 @@
 package eft
 
 import (
-	"eft-spg/service/cfg"
-	"eft-spg/service/database"
-	"eft-spg/util"
 	"github.com/bytedance/sonic"
 	"github.com/bytedance/sonic/ast"
+	"github.com/donkeywon/eft-spg/service/cfg"
+	"github.com/donkeywon/eft-spg/service/database"
+	"github.com/donkeywon/eft-spg/util"
 	"github.com/huandu/go-clone"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"

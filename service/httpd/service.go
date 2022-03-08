@@ -2,10 +2,10 @@ package httpd
 
 import (
 	"compress/zlib"
-	"eft-spg/util"
 	"fmt"
 	"github.com/bytedance/sonic"
 	"github.com/bytedance/sonic/ast"
+	"github.com/donkeywon/eft-spg/util"
 	"github.com/donkeywon/gtil/httpd"
 	"github.com/donkeywon/gtil/service"
 	"github.com/gorilla/mux"

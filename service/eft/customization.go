@@ -1,9 +1,9 @@
 package eft
 
 import (
-	"eft-spg/service/database"
-	"eft-spg/service/profile"
 	"github.com/bytedance/sonic/ast"
+	"github.com/donkeywon/eft-spg/service/database"
+	"github.com/donkeywon/eft-spg/service/profile"
 )
 
 func GetSuits(sessID string) *ast.Node {

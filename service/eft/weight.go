@@ -1,8 +1,8 @@
 package eft
 
 import (
-	"eft-spg/util"
 	"github.com/bytedance/sonic/ast"
+	"github.com/donkeywon/eft-spg/util"
 )
 
 func getWeightedInventoryItem(equipPool *ast.Node) (string, int) {

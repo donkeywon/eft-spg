@@ -1,8 +1,8 @@
 package hook
 
 import (
-	"eft-spg/util"
 	"fmt"
+	"github.com/donkeywon/eft-spg/util"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

@@ -1,9 +1,9 @@
 package httpd
 
 import (
-	"eft-spg/service/eft"
-	"eft-spg/util"
 	"github.com/bytedance/sonic/ast"
+	"github.com/donkeywon/eft-spg/service/eft"
+	"github.com/donkeywon/eft-spg/util"
 	"net/http"
 )
 

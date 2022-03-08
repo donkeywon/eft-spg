@@ -1,8 +1,8 @@
 package eft
 
 import (
-	"eft-spg/service/cfg"
-	"eft-spg/util"
+	"github.com/donkeywon/eft-spg/service/cfg"
+	"github.com/donkeywon/eft-spg/util"
 )
 
 func getRandomisedMaxWeaponOrArmorDurability(botRole string, weaponOrArmor string) int {

@@ -1,7 +1,7 @@
 package eft
 
 import (
-	"eft-spg/service/cfg"
+	"github.com/donkeywon/eft-spg/service/cfg"
 	"github.com/donkeywon/gtil/service"
 )
 

@@ -1,6 +1,6 @@
 package eft
 
-import "eft-spg/service/database"
+import "github.com/donkeywon/eft-spg/service/database"
 
 const (
 	GameEventNone      = "None"

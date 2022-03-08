@@ -1,12 +1,12 @@
 package eft
 
 import (
-	"eft-spg/service/database"
-	"eft-spg/service/profile"
-	"eft-spg/util"
 	"fmt"
 	"github.com/bytedance/sonic"
 	"github.com/bytedance/sonic/ast"
+	"github.com/donkeywon/eft-spg/service/database"
+	"github.com/donkeywon/eft-spg/service/profile"
+	"github.com/donkeywon/eft-spg/util"
 	util2 "github.com/donkeywon/gtil/util"
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"

@@ -1,9 +1,9 @@
 package eft
 
 import (
-	"eft-spg/service/database"
-	"eft-spg/util"
 	"github.com/bytedance/sonic/ast"
+	"github.com/donkeywon/eft-spg/service/database"
+	"github.com/donkeywon/eft-spg/util"
 )
 
 func isItemIncompatibleWithCurrentItem(items *ast.Node, tplIDToCheck string, equSlot string) bool {

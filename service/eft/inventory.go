@@ -1,10 +1,10 @@
 package eft
 
 import (
-	"eft-spg/service/cfg"
-	"eft-spg/service/database"
-	"eft-spg/util"
 	"github.com/bytedance/sonic/ast"
+	"github.com/donkeywon/eft-spg/service/cfg"
+	"github.com/donkeywon/eft-spg/service/database"
+	"github.com/donkeywon/eft-spg/util"
 	"go.uber.org/zap"
 	"sort"
 	"strings"

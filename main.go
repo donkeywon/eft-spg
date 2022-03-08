@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"eft-spg/cmd"
 	"fmt"
+	"github.com/donkeywon/eft-spg/cmd"
 	"github.com/donkeywon/gtil/logger"
 	"github.com/donkeywon/gtil/logger/core"
 	"github.com/donkeywon/gtil/service"
