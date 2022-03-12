@@ -81,10 +81,6 @@ func generateInventory(tmplIvt *ast.Node, equipChances *ast.Node, generation *as
 	// TODO generateWeapon
 }
 
-func generateWeapon() {
-
-}
-
 func generateEquipment(ivtBase *ast.Node, equipSlot string, equipPool *ast.Node, modPool *ast.Node, spawnChances *ast.Node, botRole string) *ast.Node {
 	it := ast.NewArray(nil)
 	items := &it
@@ -109,15 +105,15 @@ func generateEquipment(ivtBase *ast.Node, equipSlot string, equipPool *ast.Node,
 		return items
 	}
 
-	equipItemTpl, _ := getWeightedInventoryItem(equipPool)
-	itemTpl := database.GetDatabase().GetByPath("templates", "items", equipItemTpl)
+	equipItemTplId, _ := getWeightedInventoryItem(equipPool)
+	itemTpl := database.GetDatabase().GetByPath("templates", "items", equipItemTplId)
 
 	if itemTpl == nil || !itemTpl.Exists() {
-		svc.Error("Could not find item template", zap.String("tpl", equipItemTpl))
+		svc.Error("Could not find item template", zap.String("tpl", equipItemTplId))
 		return items
 	}
 
-	if isItemIncompatibleWithCurrentItem(ivtBase.GetByPath("inventory", "items"), equipItemTpl, equipSlot) {
+	if isItemIncompatibleWithCurrentItem(ivtBase.GetByPath("inventory", "items"), equipItemTplId, equipSlot) {
 		// Bad luck - randomly picked item was not compatible with current gear
 		return items
 	}
@@ -125,7 +121,7 @@ func generateEquipment(ivtBase *ast.Node, equipSlot string, equipPool *ast.Node,
 	id := util.GenerateID()
 	item := ast.NewObject(nil)
 	item.Set("_id", ast.NewString(id))
-	item.Set("_tpl", ast.NewString(equipItemTpl))
+	item.Set("_tpl", ast.NewString(equipItemTplId))
 	item.Set("parentId", *ivtBase.Get("equipment"))
 	item.Set("slotId", ast.NewString(equipSlot))
 
@@ -137,7 +133,7 @@ func generateEquipment(ivtBase *ast.Node, equipSlot string, equipPool *ast.Node,
 
 	items.Add(item)
 	modPool.ForEach(func(path ast.Sequence, node *ast.Node) bool {
-		if *path.Key == equipItemTpl {
+		if *path.Key == equipItemTplId {
 			items = generateModsForItem(items, modPool, id, itemTpl, spawnChances.Get("mods"), false)
 			return false
 		}
